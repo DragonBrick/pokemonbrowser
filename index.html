@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pokémon Browser</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="pokemon-data.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
-  <script defer src="app.js"></script>
 </head>
 <body>
   <div x-data="pokemonBrowser" class="app">
@@ -124,5 +121,8 @@
       Showing <strong x-text="filteredPokemon.length"></strong> of <strong x-text="pokemon.length"></strong> Pokémon
     </footer>
   </div>
+  <script src="pokemon-data.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

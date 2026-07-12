@@ -1,6 +1,5 @@
-document.addEventListener('alpine:init', () => {
-  Alpine.data('pokemonBrowser', () => ({
-    pokemon: [],
+Alpine.data('pokemonBrowser', () => ({
+  pokemon: [],
     chips: [],
     search: '',
     sortKey: 'id',
@@ -227,4 +226,4 @@ document.addEventListener('alpine:init', () => {
       this.progress = '';
     },
   }));
-});
+
