@@ -35,7 +35,6 @@
             <button @click="addChip('move'); showAddMenu = false">Move</button>
             <button @click="addChip('type'); showAddMenu = false">Type</button>
             <button @click="addChip('total'); showAddMenu = false">Total</button>
-            <button @click="addChip('mega'); showAddMenu = false">Mega</button>
           </div>
         </div>
 
@@ -103,12 +102,6 @@
                     </select>
                     <input type="number" x-model="chip.value" placeholder="0" min="0" max="1000" @keyup.enter="commitChip(chip)">
                   </span>
-                </template>
-                <template x-if="chip.type === 'mega'">
-                  <select x-model="chip.value" @change="commitChip(chip)">
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                  </select>
                 </template>
                 <button class="chip-commit" @click="commitChip(chip)">✓</button>
               </div>

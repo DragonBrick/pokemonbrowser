@@ -93,7 +93,6 @@ body {
 .chip-gen { border-color: var(--chip-gen); }
 .chip-stat { border-color: var(--chip-stat); }
 .chip-move { border-color: var(--chip-move); }
-.chip-mega { border-color: var(--accent); }
 .chip-type { border-color: #f0a3c4; }
 .chip-total { border-color: #f2c94c; }
 .chip-learners { border-color: var(--chip-stat); }

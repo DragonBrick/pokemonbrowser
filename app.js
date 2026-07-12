@@ -82,6 +82,7 @@ document.addEventListener('alpine:init', () => {
         const q = this.search.toLowerCase();
         result = result.filter((p) => p.name.includes(q));
       }
+      result = result.filter((p) => p.id < 10000);
 
       const groups = {};
       for (const chip of this.chips) {
@@ -103,8 +104,6 @@ document.addEventListener('alpine:init', () => {
             const moveName = (c.value || '').toLowerCase().trim();
             return moveName && p.moves.some((m) => m.includes(moveName));
           }));
-        } else if (type === 'mega') {
-          result = result.filter((p) => chips[0].value === 'true' ? p.moves.some((m) => m.includes('mega-')) : !p.moves.some((m) => m.includes('mega-')));
         } else if (type === 'type') {
           result = result.filter((p) => chips.some((c) => {
             const selected = c.types.filter(Boolean);
@@ -170,8 +169,6 @@ document.addEventListener('alpine:init', () => {
         chip.value = '';
       } else if (type === 'move') {
         chip.value = '';
-      } else if (type === 'mega') {
-        chip.value = 'true';
       } else if (type === 'type') {
         chip.types = ['fire', ''];
       } else if (type === 'total') {
@@ -196,7 +193,6 @@ document.addEventListener('alpine:init', () => {
       if (chip.type === 'generation') return `Gen ${chip.value}`;
       if (chip.type === 'stat') return `${this.statLabel(chip.stat)} ${chip.operator} ${chip.value || '?'}`;
       if (chip.type === 'move') return `Knows ${chip.value || '...'}`;
-      if (chip.type === 'mega') return `Mega: ${chip.value === 'true' ? 'Yes' : 'No'}`;
       if (chip.type === 'type') return `Type: ${chip.types.filter(Boolean).map((t) => this.capitalize(t)).join('/')}`;
       if (chip.type === 'total') return `Total ${chip.operator} ${chip.value || '?'}`;
       return '';
