@@ -82,7 +82,7 @@ document.addEventListener('alpine:init', () => {
         const q = this.search.toLowerCase();
         result = result.filter((p) => p.name.includes(q));
       }
-      result = result.filter((p) => p.id < 10000);
+      result = result.filter((p) => !p.name.includes('-mega') && !p.name.includes('-gmax'));
 
       const groups = {};
       for (const chip of this.chips) {

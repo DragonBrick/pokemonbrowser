@@ -38,7 +38,7 @@ async function main() {
   for (let i = 0; i < total; i++) {
     const entry = listRes.results[i];
     const id = parseInt(entry.url.split('/').filter(Boolean).pop());
-    if (id >= 10000) continue;
+    if (entry.name.includes('-mega') || entry.name.includes('-gmax')) continue;
     try {
       console.log(`  [${i + 1}/${total}] ${entry.name}...`);
       const detail = await fetch(entry.url);
