@@ -9,13 +9,20 @@
 <body>
   <div x-data="pokemonBrowser" class="app">
     <header class="header">
-      <h1 class="title">Pokémon Browser</h1>
+      <div class="header-left">
+        <h1 class="title">Pokémon Browser</h1>
+        <nav class="tabs">
+          <button :class="{ active: activeTab === 'pokemon' }" @click="activeTab = 'pokemon'">Pokémon</button>
+          <button :class="{ active: activeTab === 'moves' }" @click="activeTab = 'moves'">Moves</button>
+        </nav>
+      </div>
       <div class="header-actions">
-        <span class="result-count" x-text="`${pokemon.length} Pokémon loaded`"></span>
-        <button class="btn btn-refresh" @click="refreshFromApi" :disabled="loading" x-text="loading ? progress : '↻ Refresh from PokeAPI'"></button>
+        <span class="result-count" x-show="activeTab === 'pokemon'" x-text="`${filteredPokemon.length} / ${pokemon.length} Pokémon`"></span>
+        <span class="result-count" x-show="activeTab === 'moves'" x-text="`${filteredMoves.length} / ${moves.length} Moves`"></span>
       </div>
     </header>
 
+    <div x-show="activeTab === 'pokemon'">
     <div class="controls">
       <input type="text" class="search-input" placeholder="Search by name..." x-model="search" @input="recompute()">
 
@@ -26,6 +33,9 @@
             <button @click="addChip('generation'); showAddMenu = false">Generation</button>
             <button @click="addChip('stat'); showAddMenu = false">Stat</button>
             <button @click="addChip('move'); showAddMenu = false">Move</button>
+            <button @click="addChip('type'); showAddMenu = false">Type</button>
+            <button @click="addChip('total'); showAddMenu = false">Total</button>
+            <button @click="addChip('mega'); showAddMenu = false">Mega</button>
           </div>
         </div>
 
@@ -69,6 +79,37 @@
                 <template x-if="chip.type === 'move'">
                   <input type="text" x-model="chip.value" placeholder="Move name..." @keyup.enter="commitChip(chip)">
                 </template>
+                <template x-if="chip.type === 'type'">
+                  <span class="chip-edit-row">
+                    <select x-model="chip.types[0]" @change="commitChip(chip)">
+                      <template x-for="t in allTypes" :key="t">
+                        <option :value="t" x-text="capitalize(t)"></option>
+                      </template>
+                    </select>
+                    <span class="chip-edit-sep">+</span>
+                    <select x-model="chip.types[1]" @change="commitChip(chip)">
+                      <option value="">--</option>
+                      <template x-for="t in allTypes" :key="t">
+                        <option :value="t" x-text="capitalize(t)"></option>
+                      </template>
+                    </select>
+                  </span>
+                </template>
+                <template x-if="chip.type === 'total'">
+                  <span class="chip-edit-row">
+                    <select x-model="chip.operator">
+                      <option value=">">&gt;</option>
+                      <option value="<">&lt;</option>
+                    </select>
+                    <input type="number" x-model="chip.value" placeholder="0" min="0" max="1000" @keyup.enter="commitChip(chip)">
+                  </span>
+                </template>
+                <template x-if="chip.type === 'mega'">
+                  <select x-model="chip.value" @change="commitChip(chip)">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </template>
                 <button class="chip-commit" @click="commitChip(chip)">✓</button>
               </div>
             </template>
@@ -83,9 +124,10 @@
         <thead>
           <tr>
             <template x-for="col in columns" :key="col.key">
-              <th :class="{ sortable: col.sortable, sorted: sortKey === col.key }" @click="col.sortable && toggleSort(col.key)">
+              <th :class="{ sortable: col.sortable, sorted: sortKey === col.key }" @click="col.sortable && toggleSort(col.key)" :style="colWidths[col.key] ? `width:${colWidths[col.key]}px` : ''">
                 <span x-text="col.label"></span>
                 <span class="sort-arrow" x-show="sortKey === col.key" x-text="sortDir === 'asc' ? '▲' : '▼'"></span>
+                <span class="resize-handle" @mousedown.stop="startResize($event, col.key)"></span>
               </th>
             </template>
           </tr>
@@ -94,10 +136,12 @@
           <template x-for="p in filteredPokemon" :key="p.id">
             <tr>
               <td x-text="p.id" class="col-id"></td>
-              <td class="col-sprite"><img :src="spriteUrl(p.id)" :alt="p.name" loading="lazy" width="40" height="40"></td>
+              <td class="col-sprite"><img :src="spriteUrl(p.id)" :alt="p.name" loading="lazy" width="60" height="60" @error="onSpriteError($event, p.id)"></td>
               <td class="col-name" x-text="capitalize(p.name)"></td>
               <td class="col-types">
-                <span x-for="t in p.types" :key="t" class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                <template x-for="t in p.types" :key="t">
+                  <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                </template>
               </td>
               <td class="col-stat" x-text="p.stats.hp"></td>
               <td class="col-stat" x-text="p.stats.attack"></td>
@@ -116,12 +160,98 @@
         No Pokémon match your filters.
       </div>
     </div>
+    </div>
+
+    <div x-show="activeTab === 'moves'">
+    <div class="controls">
+      <input type="text" class="search-input" placeholder="Search moves..." x-model="moveSearch" @input="moveRecompute()">
+
+      <div class="chip-bar">
+        <div class="add-chip-wrapper">
+          <button class="chip chip-add" @click="moveShowAddMenu = !moveShowAddMenu">+ Add Filter</button>
+          <div class="add-chip-menu" x-show="moveShowAddMenu" @click.outside="moveShowAddMenu = false">
+            <button @click="addMoveChip('type'); moveShowAddMenu = false">Type</button>
+            <button @click="addMoveChip('learners'); moveShowAddMenu = false">Min Learners</button>
+            <button @click="addMoveChip('pokemon'); moveShowAddMenu = false">Learned By</button>
+          </div>
+        </div>
+
+        <template x-for="(chip, i) in moveChips" :key="i">
+          <div class="chip" :class="'chip-' + chip.type" @click.stop>
+            <template x-if="!chip.editing">
+              <span class="chip-text" @click="chip.editing = true" x-text="moveChipLabel(chip)"></span>
+            </template>
+            <template x-if="chip.editing">
+              <div class="chip-edit">
+                <template x-if="chip.type === 'type'">
+                  <select x-model="chip.value" @change="commitMoveChip(chip)">
+                    <template x-for="t in allTypes" :key="t">
+                      <option :value="t" x-text="capitalize(t)"></option>
+                    </template>
+                  </select>
+                </template>
+                <template x-if="chip.type === 'learners'">
+                  <input type="number" x-model="chip.value" placeholder="10" min="0" @keyup.enter="commitMoveChip(chip)">
+                </template>
+                <template x-if="chip.type === 'pokemon'">
+                  <input type="text" x-model="chip.value" placeholder="Pokémon name..." @keyup.enter="commitMoveChip(chip)">
+                </template>
+                <button class="chip-commit" @click="commitMoveChip(chip)">✓</button>
+              </div>
+            </template>
+            <button class="chip-remove" @click="removeMoveChip(i)">&times;</button>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="poke-table">
+        <thead>
+          <tr>
+            <template x-for="col in moveColumns" :key="col.key">
+              <th :class="{ sortable: col.sortable, sorted: moveSortKey === col.key }" @click="col.sortable && toggleMoveSort(col.key)">
+                <span x-text="col.label"></span>
+                <span class="sort-arrow" x-show="moveSortKey === col.key" x-text="moveSortDir === 'asc' ? '▲' : '▼'"></span>
+              </th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="m in filteredMoves" :key="m.name">
+            <tr>
+              <td class="col-name" x-text="capitalize(m.name)"></td>
+              <td class="col-types">
+                <span class="type-badge" :class="'type-' + m.type" x-show="m.type" x-text="capitalize(m.type)"></span>
+                <span x-show="!m.type" class="text-dim">—</span>
+              </td>
+              <td class="col-stat" x-text="m.power != null ? m.power : '—'"></td>
+              <td class="col-stat" x-text="m.accuracy != null ? m.accuracy : '—'"></td>
+              <td class="col-stat" x-text="m.pp != null ? m.pp : '—'"></td>
+              <td>
+                <span class="category-badge" :class="'category-' + m.damage_class" x-show="m.damage_class" x-text="capitalize(m.damage_class)"></span>
+                <span x-show="!m.damage_class" class="text-dim">—</span>
+              </td>
+              <td class="col-desc" x-text="m.description || '—'"></td>
+              <td class="col-stat" x-text="m.learners"></td>
+              <td class="col-gen" x-text="m.gen"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <div class="no-results" x-show="filteredMoves.length === 0 && moves.length > 0">
+        No moves match your filters.
+      </div>
+    </div>
+    </div>
 
     <footer class="footer">
-      Showing <strong x-text="filteredPokemon.length"></strong> of <strong x-text="pokemon.length"></strong> Pokémon
+      <span x-show="activeTab === 'pokemon'">Showing <strong x-text="filteredPokemon.length"></strong> of <strong x-text="pokemon.length"></strong> Pokémon</span>
+      <span x-show="activeTab === 'moves'">Showing <strong x-text="filteredMoves.length"></strong> of <strong x-text="moves.length"></strong> Moves</span>
     </footer>
   </div>
   <script src="pokemon-data.js"></script>
+  <script src="moves-data.js"></script>
   <script src="app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
 </body>

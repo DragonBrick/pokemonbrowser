@@ -38,6 +38,7 @@ async function main() {
   for (let i = 0; i < total; i++) {
     const entry = listRes.results[i];
     const id = parseInt(entry.url.split('/').filter(Boolean).pop());
+    if (id >= 10000) continue;
     try {
       console.log(`  [${i + 1}/${total}] ${entry.name}...`);
       const detail = await fetch(entry.url);
@@ -63,7 +64,45 @@ async function main() {
 
   fs.writeFileSync('pokemon-data.json', JSON.stringify(pokemon, null, 2));
   fs.writeFileSync('pokemon-data.js', 'window.__POKEMON_DATA__ = ' + JSON.stringify(pokemon) + ';');
-  console.log(`\nDone! Saved ${pokemon.length} Pokémon to pokemon-data.json and pokemon-data.js`);
+  console.log(`\nSaved ${pokemon.length} Pokémon`);
+
+  console.log('Fetching move details...');
+  const moveSet = new Set();
+  for (const p of pokemon) {
+    for (const m of p.moves) moveSet.add(m);
+  }
+  const moveListRes = await fetch('https://pokeapi.co/api/v2/move?limit=1000');
+  const moveUrlMap = {};
+  for (const entry of moveListRes.results) {
+    if (moveSet.has(entry.name)) moveUrlMap[entry.name] = entry.url;
+  }
+  const entries = Object.entries(moveUrlMap);
+  const movesData = [];
+  for (let i = 0; i < entries.length; i += 10) {
+    const batch = entries.slice(i, i + 10);
+    await Promise.all(batch.map(async ([name, url]) => {
+      try {
+        const detail = await fetch(url);
+        const effect = (detail.effect_entries || []).find((e) => e.language.name === 'en');
+        movesData.push({
+          name,
+          type: detail.type.name,
+          power: detail.power,
+          accuracy: detail.accuracy,
+          pp: detail.pp,
+          damage_class: detail.damage_class ? detail.damage_class.name : null,
+          description: effect ? effect.effect.replace(/[\n\f]/g, ' ').replace(/\s{2,}/g, ' ').trim() : null,
+        });
+      } catch (e) {
+        console.error(`  Failed ${name}: ${e.message}`);
+      }
+    }));
+    if ((i + 10) % 200 === 0 || i + 10 >= entries.length) {
+      console.log(`  ${Math.min(i + 10, entries.length)}/${entries.length}`);
+    }
+  }
+  fs.writeFileSync('moves-data.js', 'window.__MOVES_DATA__ = ' + JSON.stringify(movesData) + ';');
+  console.log(`Saved ${movesData.length} moves to moves-data.js`);
 }
 
 main().catch(console.error);

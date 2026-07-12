@@ -28,7 +28,19 @@ body {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
 }
+.header-left { display: flex; align-items: center; gap: 20px; }
 .title { font-size: 1.6rem; font-weight: 700; }
+.tabs { display: flex; gap: 0; }
+.tabs button {
+  padding: 6px 16px; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-dim); cursor: pointer; font-size: 0.85rem; font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+.tabs button:first-child { border-radius: 6px 0 0 6px; }
+.tabs button:last-child { border-radius: 0 6px 6px 0; }
+.tabs button:not(:last-child) { border-right: none; }
+.tabs button:hover { background: var(--surface2); color: var(--text); }
+.tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 .header-actions { display: flex; align-items: center; gap: 12px; }
 .result-count { font-size: 0.85rem; color: var(--text-dim); }
 
@@ -37,11 +49,6 @@ body {
   cursor: pointer; font-size: 0.85rem; font-weight: 600;
   transition: background 0.15s;
 }
-.btn-refresh {
-  background: var(--accent); color: #fff;
-}
-.btn-refresh:hover { background: var(--accent-hover); }
-.btn-refresh:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Controls */
 .controls {
@@ -86,6 +93,11 @@ body {
 .chip-gen { border-color: var(--chip-gen); }
 .chip-stat { border-color: var(--chip-stat); }
 .chip-move { border-color: var(--chip-move); }
+.chip-mega { border-color: var(--accent); }
+.chip-type { border-color: #f0a3c4; }
+.chip-total { border-color: #f2c94c; }
+.chip-learners { border-color: var(--chip-stat); }
+.chip-pokemon { border-color: var(--chip-gen); }
 .chip-text { cursor: pointer; }
 .chip-remove {
   background: none; border: none; color: var(--text-dim);
@@ -106,6 +118,7 @@ body {
 .chip-edit input[type="text"] { width: 110px; }
 .chip-edit select { max-width: 90px; }
 .chip-edit-row { display: flex; gap: 4px; align-items: center; }
+.chip-edit-sep { color: var(--text-dim); font-size: 0.85rem; font-weight: 700; }
 .chip-commit {
   background: var(--accent); color: #fff; border: none;
   padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;
@@ -123,7 +136,23 @@ body {
 .poke-table th {
   padding: 10px 8px; text-align: left; font-weight: 600;
   color: var(--text-dim); white-space: nowrap; user-select: none;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 2px solid var(--border); position: relative;
+}
+.poke-table th:not(:last-child) { border-right: 1px solid var(--border); }
+.resize-handle {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: 10px; cursor: col-resize; z-index: 2;
+}
+.resize-handle::before {
+  content: ''; position: absolute;
+  top: 6px; bottom: 6px; left: 4px;
+  width: 2px; background: var(--text-dim); opacity: 0.2;
+  border-radius: 1px; transition: opacity 0.15s, background 0.15s, top 0.15s, bottom 0.15s;
+}
+.resize-handle:hover::before,
+.resize-handle:active::before {
+  opacity: 1; background: var(--accent);
+  top: 2px; bottom: 2px;
 }
 .poke-table th.sortable { cursor: pointer; transition: color 0.15s; }
 .poke-table th.sortable:hover { color: var(--text); }
@@ -138,20 +167,22 @@ body {
 .poke-table tbody tr:hover { background: rgba(124,58,237,0.08); }
 
 .col-id { color: var(--text-dim); font-size: 0.8rem; width: 40px; }
-.col-sprite { width: 48px; text-align: center; }
+.col-sprite { width: 72px; text-align: center; }
 .col-sprite img { display: block; image-rendering: pixelated; }
 .col-name { font-weight: 600; text-transform: capitalize; }
 .col-stat { text-align: right; width: 60px; font-variant-numeric: tabular-nums; }
 .col-total { font-weight: 700; }
 .col-gen { text-align: center; width: 50px; }
 .col-moves { text-align: right; color: var(--text-dim); width: 50px; }
-.col-types { display: flex; gap: 4px; }
+.col-types { white-space: normal; }
+.col-types .type-badge { margin: 1px 0; }
 
 .type-badge {
   display: inline-block; padding: 2px 10px; border-radius: 12px;
   font-size: 0.75rem; font-weight: 600; text-transform: capitalize;
   color: #fff;
 }
+.text-dim { color: var(--text-dim); }
 .type-normal { background: #9fa19f; }
 .type-fire { background: #e25822; }
 .type-water { background: #5599ca; }
@@ -170,6 +201,21 @@ body {
 .type-dark { background: #5a5660; }
 .type-steel { background: #8b8ea4; }
 .type-fairy { background: #f0a3c4; color: #000; }
+
+/* Category badges */
+.category-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 12px;
+  font-size: 0.75rem; font-weight: 600; text-transform: capitalize; color: #fff;
+}
+.category-physical { background: #e74c3c; }
+.category-special { background: #3498db; }
+.category-status { background: #7f8c8d; }
+
+/* Description column */
+.col-desc {
+  max-width: 240px; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; color: var(--text-dim); font-size: 0.8rem;
+}
 
 /* No results */
 .no-results {

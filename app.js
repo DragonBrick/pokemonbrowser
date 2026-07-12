@@ -6,9 +6,29 @@ document.addEventListener('alpine:init', () => {
     sortKey: 'id',
     sortDir: 'asc',
     filteredPokemon: [],
-    loading: false,
-    progress: '',
     showAddMenu: false,
+    colWidths: (() => { try { return JSON.parse(localStorage.getItem('pokemonColWidths') || '{}'); } catch(e) { return {}; } })(),
+    allTypes: ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'],
+    activeTab: 'pokemon',
+    moves: [],
+    moveChips: [],
+    moveSearch: '',
+    moveSortKey: 'learners',
+    moveSortDir: 'desc',
+    filteredMoves: [],
+    moveShowAddMenu: false,
+
+    moveColumns: [
+      { key: 'name', label: 'Move', sortable: true },
+      { key: 'type', label: 'Type', sortable: true },
+      { key: 'power', label: 'Power', sortable: true },
+      { key: 'accuracy', label: 'Acc', sortable: true },
+      { key: 'pp', label: 'PP', sortable: true },
+      { key: 'damage_class', label: 'Category', sortable: false },
+      { key: 'description', label: 'Description', sortable: false },
+      { key: 'learners', label: 'Learners', sortable: true },
+      { key: 'gen', label: 'Gen', sortable: true },
+    ],
 
     columns: [
       { key: 'id', label: '#', sortable: true },
@@ -49,9 +69,10 @@ document.addEventListener('alpine:init', () => {
           this.pokemon = data;
           this.recompute();
         } catch (e) {
-          console.warn('No pokemon data found. Click Refresh to fetch from PokeAPI.');
+          console.warn('No pokemon data found.');
         }
       }
+      this.computeMoves();
     },
 
     recompute() {
@@ -62,22 +83,38 @@ document.addEventListener('alpine:init', () => {
         result = result.filter((p) => p.name.includes(q));
       }
 
+      const groups = {};
       for (const chip of this.chips) {
-        if (chip.type === 'generation') {
-          result = result.filter((p) => p.generation === parseInt(chip.value));
-        } else if (chip.type === 'stat') {
-          const statKey = chip.stat;
-          const val = parseInt(chip.value) || 0;
-          if (chip.operator === '>') {
-            result = result.filter((p) => p.stats[statKey] > val);
-          } else {
-            result = result.filter((p) => p.stats[statKey] < val);
-          }
-        } else if (chip.type === 'move') {
-          const moveName = (chip.value || '').toLowerCase().trim();
-          if (moveName) {
-            result = result.filter((p) => p.moves.some((m) => m.includes(moveName)));
-          }
+        if (!groups[chip.type]) groups[chip.type] = [];
+        groups[chip.type].push(chip);
+      }
+
+      for (const [type, chips] of Object.entries(groups)) {
+        if (type === 'generation') {
+          result = result.filter((p) => chips.some((c) => p.generation === parseInt(c.value)));
+        } else if (type === 'stat') {
+          result = result.filter((p) => chips.some((c) => {
+            const val = parseInt(c.value) || 0;
+            const key = c.stat;
+            return c.operator === '>' ? p.stats[key] > val : p.stats[key] < val;
+          }));
+        } else if (type === 'move') {
+          result = result.filter((p) => chips.some((c) => {
+            const moveName = (c.value || '').toLowerCase().trim();
+            return moveName && p.moves.some((m) => m.includes(moveName));
+          }));
+        } else if (type === 'mega') {
+          result = result.filter((p) => chips[0].value === 'true' ? p.moves.some((m) => m.includes('mega-')) : !p.moves.some((m) => m.includes('mega-')));
+        } else if (type === 'type') {
+          result = result.filter((p) => chips.some((c) => {
+            const selected = c.types.filter(Boolean);
+            return selected.length === 0 || selected.every((t) => p.types.includes(t));
+          }));
+        } else if (type === 'total') {
+          result = result.filter((p) => chips.some((c) => {
+            const val = parseInt(c.value) || 0;
+            return c.operator === '>' ? this.statTotal(p) > val : this.statTotal(p) < val;
+          }));
         }
       }
 
@@ -133,8 +170,16 @@ document.addEventListener('alpine:init', () => {
         chip.value = '';
       } else if (type === 'move') {
         chip.value = '';
+      } else if (type === 'mega') {
+        chip.value = 'true';
+      } else if (type === 'type') {
+        chip.types = ['fire', ''];
+      } else if (type === 'total') {
+        chip.operator = '>';
+        chip.value = '';
       }
       this.chips.push(chip);
+      if (!chip.editing) this.recompute();
     },
 
     commitChip(chip) {
@@ -151,6 +196,9 @@ document.addEventListener('alpine:init', () => {
       if (chip.type === 'generation') return `Gen ${chip.value}`;
       if (chip.type === 'stat') return `${this.statLabel(chip.stat)} ${chip.operator} ${chip.value || '?'}`;
       if (chip.type === 'move') return `Knows ${chip.value || '...'}`;
+      if (chip.type === 'mega') return `Mega: ${chip.value === 'true' ? 'Yes' : 'No'}`;
+      if (chip.type === 'type') return `Type: ${chip.types.filter(Boolean).map((t) => this.capitalize(t)).join('/')}`;
+      if (chip.type === 'total') return `Total ${chip.operator} ${chip.value || '?'}`;
       return '';
     },
 
@@ -167,64 +215,161 @@ document.addEventListener('alpine:init', () => {
     },
 
     spriteUrl(id) {
+      if (id > 1025) {
+        return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+      }
       return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+    },
+
+    onSpriteError(e, id) {
+      if (!e.target.src.includes('official-artwork')) {
+        e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+      } else {
+        e.target.style.display = 'none';
+      }
     },
 
     statTotal(p) {
       return Object.values(p.stats).reduce((sum, v) => sum + v, 0);
     },
 
-    async refreshFromApi() {
-      this.loading = true;
-      this.progress = 'Fetching Pokémon list...';
-      try {
-        const listResp = await fetch('https://pokeapi.co/api/v2/pokemon?limit=2000');
-        const listData = await listResp.json();
-        const total = listData.results.length;
-        const results = [];
-
-        for (let i = 0; i < total; i++) {
-          const entry = listData.results[i];
-          const id = parseInt(entry.url.split('/').filter(Boolean).pop());
-          this.progress = `Fetching ${i + 1}/${total}...`;
-          try {
-            const detailResp = await fetch(entry.url);
-            const d = await detailResp.json();
-            const types = d.types.map((t) => t.type.name);
-            const stats = {};
-            ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'].forEach((name) => {
-              const s = d.stats.find((st) => st.stat.name === name);
-              stats[name] = s ? s.base_stat : 0;
-            });
-            const moves = d.moves.map((m) => m.move.name);
-            const gen = id <= 151 ? 1 : id <= 251 ? 2 : id <= 386 ? 3 : id <= 493 ? 4 :
-                        id <= 649 ? 5 : id <= 721 ? 6 : id <= 809 ? 7 : id <= 905 ? 8 : 9;
-            results.push({ id, name: entry.name, types, stats, generation: gen, moves });
-          } catch (e) {
-            console.warn(`Failed ${entry.name}:`, e);
-          }
-        }
-
-        this.pokemon = results;
-        try {
-          localStorage.setItem('pokemonData', JSON.stringify(results));
-        } catch (e) {
-          console.warn('Could not cache data to localStorage:', e.message);
-        }
-        this.recompute();
-
-        const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'pokemon-data.json';
-        a.click();
-        URL.revokeObjectURL(url);
-      } catch (e) {
-        alert('Failed to fetch from PokeAPI: ' + e.message);
+    computeMoves() {
+      const dataMap = {};
+      if (window.__MOVES_DATA__) {
+        for (const m of window.__MOVES_DATA__) dataMap[m.name] = m;
       }
-      this.loading = false;
-      this.progress = '';
+      const map = {};
+      for (const p of this.pokemon) {
+        for (const m of p.moves) {
+          if (!map[m]) {
+            const entry = dataMap[m] || {};
+            map[m] = {
+              name: m, learners: 0, gen: 99, pokemon: [],
+              type: entry.type || null,
+              power: entry.power ?? null,
+              accuracy: entry.accuracy ?? null,
+              pp: entry.pp ?? null,
+              damage_class: entry.damage_class || null,
+              description: entry.description || null,
+            };
+          }
+          map[m].learners++;
+          map[m].pokemon.push(p.name);
+          map[m].gen = Math.min(map[m].gen, p.generation);
+        }
+      }
+      this.moves = Object.values(map).map((m) => ({ ...m, gen: m.gen === 99 ? 9 : m.gen }));
+      this.moveRecompute();
+    },
+
+    moveRecompute() {
+      let result = [...this.moves];
+      if (this.moveSearch) {
+        const q = this.moveSearch.toLowerCase();
+        result = result.filter((m) => m.name.includes(q));
+      }
+      const groups = {};
+      for (const chip of this.moveChips) {
+        if (!groups[chip.type]) groups[chip.type] = [];
+        groups[chip.type].push(chip);
+      }
+      for (const [type, chips] of Object.entries(groups)) {
+        if (type === 'type') {
+          result = result.filter((m) => chips.some((c) => m.type === c.value));
+        } else if (type === 'learners') {
+          const val = parseInt(chips[0].value) || 0;
+          result = result.filter((m) => m.learners >= val);
+        } else if (type === 'pokemon') {
+          const q = (chips[0].value || '').toLowerCase().trim();
+          result = result.filter((m) => q && m.pokemon.some((p) => p.includes(q)));
+        }
+      }
+      const key = this.moveSortKey;
+      const dir = this.moveSortDir === 'asc' ? 1 : -1;
+      result.sort((a, b) => {
+        let va = a[key], vb = b[key];
+        if (key === 'name' || key === 'type') {
+          va = va || '';
+          vb = vb || '';
+          return va.localeCompare(vb) * dir;
+        }
+        if (va == null) va = -Infinity;
+        if (vb == null) vb = -Infinity;
+        return (va - vb) * dir;
+      });
+      this.filteredMoves = result;
+    },
+
+    toggleMoveSort(key) {
+      if (this.moveSortKey === key) {
+        this.moveSortDir = this.moveSortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.moveSortKey = key;
+        this.moveSortDir = 'asc';
+      }
+      this.moveRecompute();
+    },
+
+    addMoveChip(type) {
+      const chip = { type, editing: true };
+      if (type === 'type') {
+        chip.value = 'fire';
+      } else if (type === 'learners') {
+        chip.value = '10';
+      } else if (type === 'pokemon') {
+        chip.value = '';
+      }
+      this.moveChips.push(chip);
+      if (!chip.editing) this.moveRecompute();
+    },
+
+    commitMoveChip(chip) {
+      chip.editing = false;
+      this.moveRecompute();
+    },
+
+    removeMoveChip(index) {
+      this.moveChips.splice(index, 1);
+      this.moveRecompute();
+    },
+
+    moveChipLabel(chip) {
+      if (chip.type === 'type') return `Type: ${this.capitalize(chip.value)}`;
+      if (chip.type === 'learners') return `≥ ${chip.value} learners`;
+      if (chip.type === 'pokemon') return `Learned by ${this.capitalize(chip.value) || '...'}`;
+      return '';
+    },
+
+    startResize(e, key) {
+      const th = e.target.parentElement;
+      const startX = e.clientX;
+      const startWidth = th.offsetWidth;
+
+      document.documentElement.style.cursor = 'col-resize';
+      document.documentElement.style.userSelect = 'none';
+
+      const onMove = (e) => {
+        const w = Math.max(30, startWidth + (e.clientX - startX));
+        th.style.width = `${Math.round(w)}px`;
+      };
+
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.documentElement.style.cursor = '';
+        document.documentElement.style.userSelect = '';
+        this.colWidths[key] = th.offsetWidth;
+        this.saveColWidths();
+      };
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    },
+
+    saveColWidths() {
+      try {
+        localStorage.setItem('pokemonColWidths', JSON.stringify(this.colWidths));
+      } catch (e) {}
     },
   }));
 });
