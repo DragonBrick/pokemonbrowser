@@ -29,8 +29,12 @@ document.addEventListener('alpine:init', () => {
     async init() {
       const cached = localStorage.getItem('pokemonData');
       if (cached) {
-        this.pokemon = JSON.parse(cached);
-        this.recompute();
+        try {
+          this.pokemon = JSON.parse(cached);
+          this.recompute();
+        } catch (e) {
+          localStorage.removeItem('pokemonData');
+        }
       }
       try {
         const resp = await fetch('pokemon-data.json');
@@ -78,8 +82,8 @@ document.addEventListener('alpine:init', () => {
       result.sort((a, b) => {
         let va, vb;
         if (key === 'total') {
-          va = Object.values(a.stats).reduce((s, v) => s + v, 0);
-          vb = Object.values(b.stats).reduce((s, v) => s + v, 0);
+          va = this.statTotal(a);
+          vb = this.statTotal(b);
         } else if (key === 'moves') {
           va = a.moves.length;
           vb = b.moves.length;
