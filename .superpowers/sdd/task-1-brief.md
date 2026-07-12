@@ -1,3 +1,18 @@
+### Task 1: Generate pokemon-data.json
+
+**Files:**
+- Create: `generate-data.js`
+- Create: `pokemon-data.json` (output)
+
+**Interfaces:**
+- Produces: `pokemon-data.json` — array of objects with shape:
+  ```ts
+  { id: number, name: string, types: string[], stats: { hp: number, attack: number, defense: number, "special-attack": number, "special-defense": number, speed: number }, generation: number, moves: string[] }
+  ```
+
+- [ ] **Step 1: Write generate-data.js**
+
+```js
 const https = require('https');
 const fs = require('fs');
 
@@ -37,9 +52,9 @@ async function main() {
   const pokemon = [];
   for (let i = 0; i < total; i++) {
     const entry = listRes.results[i];
-    const id = parseInt(entry.url.split('/').filter(Boolean).pop());
+    const id = i + 1;
     try {
-      console.log(`  [${i + 1}/${total}] ${entry.name}...`);
+      console.log(`  [${id}/${total}] ${entry.name}...`);
       const detail = await fetch(entry.url);
       const types = detail.types.map((t) => t.type.name);
       const stats = {};
@@ -62,8 +77,24 @@ async function main() {
   }
 
   fs.writeFileSync('pokemon-data.json', JSON.stringify(pokemon, null, 2));
-  fs.writeFileSync('pokemon-data.js', 'window.__POKEMON_DATA__ = ' + JSON.stringify(pokemon) + ';');
-  console.log(`\nDone! Saved ${pokemon.length} Pokémon to pokemon-data.json and pokemon-data.js`);
+  console.log(`\nDone! Saved ${pokemon.length} Pokémon to pokemon-data.json`);
 }
 
 main().catch(console.error);
+```
+
+- [ ] **Step 2: Run the script to generate data**
+
+```powershell
+node generate-data.js
+```
+
+Expected: Downloads all Pokémon from PokeAPI (takes several minutes). Creates `pokemon-data.json` with 1000+ entries.
+
+- [ ] **Step 3: Verify output**
+
+```powershell
+node -e "const d = require('./pokemon-data.json'); console.log(`Entries: ${d.length}, First: ${d[0].name}, Last: ${d[d.length-1].name}`)"
+```
+
+Expected: `Entries: 1000+, First: bulbasaur, Last: <latest pokemon>`

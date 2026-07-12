@@ -1,3 +1,15 @@
+### Task 3: Create app.js — data loading + table + filters + sort + refresh
+
+**Files:**
+- Create: `app.js`
+
+**Interfaces:**
+- Consumes: `pokemon-data.json` (from Task 1), Alpine.js CDN loaded in `index.html`
+- Produces: `pokemonBrowser` Alpine.data() component with all functionality
+
+- [ ] **Step 1: Write app.js**
+
+```js
 document.addEventListener('alpine:init', () => {
   Alpine.data('pokemonBrowser', () => ({
     pokemon: [],
@@ -27,29 +39,21 @@ document.addEventListener('alpine:init', () => {
     ],
 
     async init() {
-      if (window.__POKEMON_DATA__) {
-        this.pokemon = window.__POKEMON_DATA__;
+      const cached = localStorage.getItem('pokemonData');
+      if (cached) {
+        this.pokemon = JSON.parse(cached);
         this.recompute();
-      } else {
-        const cached = localStorage.getItem('pokemonData');
-        if (cached) {
-          try {
-            this.pokemon = JSON.parse(cached);
-            this.recompute();
-          } catch (e) {
-            localStorage.removeItem('pokemonData');
-          }
-        }
       }
-      if (this.pokemon.length === 0) {
-        try {
-          const resp = await fetch('pokemon-data.json');
-          if (!resp.ok) throw new Error('not found');
-          const data = await resp.json();
-          this.pokemon = data;
-          this.recompute();
-        } catch (e) {
-          console.warn('No pokemon data found. Click Refresh to fetch from PokeAPI.');
+      try {
+        const resp = await fetch('pokemon-data.json');
+        if (!resp.ok) throw new Error('not found');
+        const data = await resp.json();
+        this.pokemon = data;
+        localStorage.setItem('pokemonData', JSON.stringify(data));
+        this.recompute();
+      } catch (e) {
+        if (this.pokemon.length === 0) {
+          console.warn('No pokemon-data.json found and no cached data. Click Refresh to fetch from PokeAPI.');
         }
       }
     },
@@ -86,8 +90,8 @@ document.addEventListener('alpine:init', () => {
       result.sort((a, b) => {
         let va, vb;
         if (key === 'total') {
-          va = this.statTotal(a);
-          vb = this.statTotal(b);
+          va = Object.values(a.stats).reduce((s, v) => s + v, 0);
+          vb = Object.values(b.stats).reduce((s, v) => s + v, 0);
         } else if (key === 'moves') {
           va = a.moves.length;
           vb = b.moves.length;
@@ -185,8 +189,8 @@ document.addEventListener('alpine:init', () => {
 
         for (let i = 0; i < total; i++) {
           const entry = listData.results[i];
-          const id = parseInt(entry.url.split('/').filter(Boolean).pop());
-          this.progress = `Fetching ${i + 1}/${total}...`;
+          const id = i + 1;
+          this.progress = `Fetching ${id}/${total}...`;
           try {
             const detailResp = await fetch(entry.url);
             const d = await detailResp.json();
@@ -206,11 +210,7 @@ document.addEventListener('alpine:init', () => {
         }
 
         this.pokemon = results;
-        try {
-          localStorage.setItem('pokemonData', JSON.stringify(results));
-        } catch (e) {
-          console.warn('Could not cache data to localStorage:', e.message);
-        }
+        localStorage.setItem('pokemonData', JSON.stringify(results));
         this.recompute();
 
         const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
@@ -228,3 +228,23 @@ document.addEventListener('alpine:init', () => {
     },
   }));
 });
+```
+
+- [ ] **Step 2: Test basic flow**
+
+Open `index.html` in a browser.
+- Verify the table loads with Pokémon data from `pokemon-data.json`.
+- Verify the "+ Add Filter" button shows a dropdown.
+- Add a "Generation" filter for Gen 1 — verify only Gen 1 Pokémon appear.
+- Add a "Stat" filter for Speed > 100 — verify further filtering.
+- Add a "Move" filter for "thunderbolt" — verify.
+- Click column headers to sort.
+- Type in the search bar to filter by name.
+- Verify the count footer updates correctly.
+
+- [ ] **Step 3: Test refresh**
+
+Click "Refresh from PokeAPI".
+- Verify progress text shows during fetch.
+- Verify data updates in-memory.
+- Verify a JSON file download is triggered.
