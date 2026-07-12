@@ -1,0 +1,218 @@
+document.addEventListener('alpine:init', () => {
+  Alpine.data('pokemonBrowser', () => ({
+    pokemon: [],
+    chips: [],
+    search: '',
+    sortKey: 'id',
+    sortDir: 'asc',
+    filteredPokemon: [],
+    loading: false,
+    progress: '',
+    showAddMenu: false,
+
+    columns: [
+      { key: 'id', label: '#', sortable: true },
+      { key: 'sprite', label: '', sortable: false },
+      { key: 'name', label: 'Name', sortable: true },
+      { key: 'types', label: 'Types', sortable: false },
+      { key: 'hp', label: 'HP', sortable: true },
+      { key: 'attack', label: 'Attack', sortable: true },
+      { key: 'defense', label: 'Defense', sortable: true },
+      { key: 'special-attack', label: 'Sp.Atk', sortable: true },
+      { key: 'special-defense', label: 'Sp.Def', sortable: true },
+      { key: 'speed', label: 'Speed', sortable: true },
+      { key: 'total', label: 'Total', sortable: true },
+      { key: 'generation', label: 'Gen', sortable: true },
+      { key: 'moves', label: 'Moves', sortable: true },
+    ],
+
+    async init() {
+      const cached = localStorage.getItem('pokemonData');
+      if (cached) {
+        this.pokemon = JSON.parse(cached);
+        this.recompute();
+      }
+      try {
+        const resp = await fetch('pokemon-data.json');
+        if (!resp.ok) throw new Error('not found');
+        const data = await resp.json();
+        this.pokemon = data;
+        localStorage.setItem('pokemonData', JSON.stringify(data));
+        this.recompute();
+      } catch (e) {
+        if (this.pokemon.length === 0) {
+          console.warn('No pokemon-data.json found and no cached data. Click Refresh to fetch from PokeAPI.');
+        }
+      }
+    },
+
+    recompute() {
+      let result = [...this.pokemon];
+
+      if (this.search) {
+        const q = this.search.toLowerCase();
+        result = result.filter((p) => p.name.includes(q));
+      }
+
+      for (const chip of this.chips) {
+        if (chip.type === 'generation') {
+          result = result.filter((p) => p.generation === parseInt(chip.value));
+        } else if (chip.type === 'stat') {
+          const statKey = chip.stat;
+          const val = parseInt(chip.value) || 0;
+          if (chip.operator === '>') {
+            result = result.filter((p) => p.stats[statKey] > val);
+          } else {
+            result = result.filter((p) => p.stats[statKey] < val);
+          }
+        } else if (chip.type === 'move') {
+          const moveName = (chip.value || '').toLowerCase().trim();
+          if (moveName) {
+            result = result.filter((p) => p.moves.some((m) => m.includes(moveName)));
+          }
+        }
+      }
+
+      const key = this.sortKey;
+      const dir = this.sortDir === 'asc' ? 1 : -1;
+      result.sort((a, b) => {
+        let va, vb;
+        if (key === 'total') {
+          va = Object.values(a.stats).reduce((s, v) => s + v, 0);
+          vb = Object.values(b.stats).reduce((s, v) => s + v, 0);
+        } else if (key === 'moves') {
+          va = a.moves.length;
+          vb = b.moves.length;
+        } else if (['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'].includes(key)) {
+          va = a.stats[key];
+          vb = b.stats[key];
+        } else if (key === 'name') {
+          va = a.name;
+          vb = b.name;
+        } else {
+          va = a[key];
+          vb = b[key];
+        }
+        if (typeof va === 'string') return va.localeCompare(vb) * dir;
+        return (va - vb) * dir;
+      });
+
+      this.filteredPokemon = result;
+    },
+
+    toggleSort(key) {
+      if (this.sortKey === key) {
+        if (this.sortDir === 'asc') {
+          this.sortDir = 'desc';
+        } else {
+          this.sortKey = 'id';
+          this.sortDir = 'asc';
+        }
+      } else {
+        this.sortKey = key;
+        this.sortDir = 'asc';
+      }
+      this.recompute();
+    },
+
+    addChip(type) {
+      const chip = { type, editing: true };
+      if (type === 'generation') {
+        chip.value = '1';
+      } else if (type === 'stat') {
+        chip.stat = 'speed';
+        chip.operator = '>';
+        chip.value = '';
+      } else if (type === 'move') {
+        chip.value = '';
+      }
+      this.chips.push(chip);
+    },
+
+    commitChip(chip) {
+      chip.editing = false;
+      this.recompute();
+    },
+
+    removeChip(index) {
+      this.chips.splice(index, 1);
+      this.recompute();
+    },
+
+    chipLabel(chip) {
+      if (chip.type === 'generation') return `Gen ${chip.value}`;
+      if (chip.type === 'stat') return `${this.statLabel(chip.stat)} ${chip.operator} ${chip.value || '?'}`;
+      if (chip.type === 'move') return `Knows ${chip.value || '...'}`;
+      return '';
+    },
+
+    statLabel(key) {
+      const map = {
+        hp: 'HP', attack: 'Attack', defense: 'Defense',
+        'special-attack': 'Sp.Atk', 'special-defense': 'Sp.Def', speed: 'Speed',
+      };
+      return map[key] || key;
+    },
+
+    capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    },
+
+    spriteUrl(id) {
+      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+    },
+
+    statTotal(p) {
+      return Object.values(p.stats).reduce((sum, v) => sum + v, 0);
+    },
+
+    async refreshFromApi() {
+      this.loading = true;
+      this.progress = 'Fetching Pokémon list...';
+      try {
+        const listResp = await fetch('https://pokeapi.co/api/v2/pokemon?limit=2000');
+        const listData = await listResp.json();
+        const total = listData.results.length;
+        const results = [];
+
+        for (let i = 0; i < total; i++) {
+          const entry = listData.results[i];
+          const id = i + 1;
+          this.progress = `Fetching ${id}/${total}...`;
+          try {
+            const detailResp = await fetch(entry.url);
+            const d = await detailResp.json();
+            const types = d.types.map((t) => t.type.name);
+            const stats = {};
+            ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'].forEach((name) => {
+              const s = d.stats.find((st) => st.stat.name === name);
+              stats[name] = s ? s.base_stat : 0;
+            });
+            const moves = d.moves.map((m) => m.move.name);
+            const gen = id <= 151 ? 1 : id <= 251 ? 2 : id <= 386 ? 3 : id <= 493 ? 4 :
+                        id <= 649 ? 5 : id <= 721 ? 6 : id <= 809 ? 7 : id <= 905 ? 8 : 9;
+            results.push({ id, name: entry.name, types, stats, generation: gen, moves });
+          } catch (e) {
+            console.warn(`Failed ${entry.name}:`, e);
+          }
+        }
+
+        this.pokemon = results;
+        localStorage.setItem('pokemonData', JSON.stringify(results));
+        this.recompute();
+
+        const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pokemon-data.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert('Failed to fetch from PokeAPI: ' + e.message);
+      }
+      this.loading = false;
+      this.progress = '';
+    },
+  }));
+});
