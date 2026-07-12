@@ -106,8 +106,8 @@ document.addEventListener('alpine:init', () => {
           }));
         } else if (type === 'type') {
           result = result.filter((p) => chips.some((c) => {
-            const selected = c.types.filter(Boolean);
-            return selected.length === 0 || selected.every((t) => p.types.includes(t));
+            const t = (c.value || '').toLowerCase().trim();
+            return t && p.types.includes(t);
           }));
         } else if (type === 'total') {
           result = result.filter((p) => chips.some((c) => {
@@ -169,8 +169,12 @@ document.addEventListener('alpine:init', () => {
         chip.value = '';
       } else if (type === 'move') {
         chip.value = '';
+        chip.suggestions = [];
+        chip.showDropdown = false;
       } else if (type === 'type') {
-        chip.types = ['fire', ''];
+        chip.value = '';
+        chip.suggestions = [];
+        chip.showDropdown = false;
       } else if (type === 'total') {
         chip.operator = '>';
         chip.value = '';
@@ -192,8 +196,8 @@ document.addEventListener('alpine:init', () => {
     chipLabel(chip) {
       if (chip.type === 'generation') return `Gen ${chip.value}`;
       if (chip.type === 'stat') return `${this.statLabel(chip.stat)} ${chip.operator} ${chip.value || '?'}`;
-      if (chip.type === 'move') return `Knows ${chip.value || '...'}`;
-      if (chip.type === 'type') return `Type: ${chip.types.filter(Boolean).map((t) => this.capitalize(t)).join('/')}`;
+      if (chip.type === 'move') return `Can learn ${chip.value || '...'}`;
+      if (chip.type === 'type') return `Type: ${this.capitalize(chip.value) || '...'}`;
       if (chip.type === 'total') return `Total ${chip.operator} ${chip.value || '?'}`;
       return '';
     },
@@ -208,6 +212,31 @@ document.addEventListener('alpine:init', () => {
 
     capitalize(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
+    },
+
+    filterSuggestions(chip) {
+      const q = (chip.value || '').toLowerCase().trim();
+      let source = [];
+      if (chip.type === 'move') {
+        source = this.moves.map(m => m.name).filter(n => n.includes(q)).slice(0, 20);
+      } else if (chip.type === 'type') {
+        source = this.allTypes.filter(t => t.includes(q));
+      } else if (chip.type === 'category') {
+        source = ['physical', 'special', 'status'].filter(c => c.includes(q));
+      }
+      chip.suggestions = source;
+      chip.showDropdown = source.length > 0;
+    },
+
+    selectSuggestion(chip, value) {
+      chip.value = value;
+      chip.showDropdown = false;
+      chip.editing = false;
+      if (chip.type === 'category') {
+        this.moveRecompute();
+      } else {
+        this.recompute();
+      }
     },
 
     spriteUrl(id) {
@@ -278,6 +307,8 @@ document.addEventListener('alpine:init', () => {
         } else if (type === 'pokemon') {
           const q = (chips[0].value || '').toLowerCase().trim();
           result = result.filter((m) => q && m.pokemon.some((p) => p.includes(q)));
+        } else if (type === 'category') {
+          result = result.filter((m) => m.damage_class === chips[0].value);
         }
       }
       const key = this.moveSortKey;
@@ -314,6 +345,10 @@ document.addEventListener('alpine:init', () => {
         chip.value = '10';
       } else if (type === 'pokemon') {
         chip.value = '';
+      } else if (type === 'category') {
+        chip.value = '';
+        chip.suggestions = [];
+        chip.showDropdown = false;
       }
       this.moveChips.push(chip);
       if (!chip.editing) this.moveRecompute();
@@ -333,6 +368,7 @@ document.addEventListener('alpine:init', () => {
       if (chip.type === 'type') return `Type: ${this.capitalize(chip.value)}`;
       if (chip.type === 'learners') return `≥ ${chip.value} learners`;
       if (chip.type === 'pokemon') return `Learned by ${this.capitalize(chip.value) || '...'}`;
+      if (chip.type === 'category') return `Category: ${this.capitalize(chip.value)}`;
       return '';
     },
 

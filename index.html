@@ -75,23 +75,20 @@
                     <input type="number" x-model="chip.value" placeholder="0" min="0" max="255" @keyup.enter="commitChip(chip)">
                   </span>
                 </template>
-                <template x-if="chip.type === 'move'">
-                  <input type="text" x-model="chip.value" placeholder="Move name..." @keyup.enter="commitChip(chip)">
-                </template>
-                <template x-if="chip.type === 'type'">
-                  <span class="chip-edit-row">
-                    <select x-model="chip.types[0]" @change="commitChip(chip)">
-                      <template x-for="t in allTypes" :key="t">
-                        <option :value="t" x-text="capitalize(t)"></option>
+                <template x-if="chip.type === 'move' || chip.type === 'type'">
+                  <span class="autocomplete-wrapper">
+                    <input type="text" x-model="chip.value"
+                           placeholder="Type to search..."
+                           @input="filterSuggestions(chip)"
+                           @focus="chip.showDropdown = chip.suggestions.length > 0"
+                           @keyup.enter="selectSuggestion(chip, chip.value)">
+                    <div class="autocomplete-dropdown" x-show="chip.showDropdown && chip.suggestions.length"
+                         @click.outside="chip.showDropdown = false">
+                      <template x-for="s in chip.suggestions" :key="s">
+                        <div class="autocomplete-item" @click="selectSuggestion(chip, s)"
+                             x-text="capitalize(s)"></div>
                       </template>
-                    </select>
-                    <span class="chip-edit-sep">+</span>
-                    <select x-model="chip.types[1]" @change="commitChip(chip)">
-                      <option value="">--</option>
-                      <template x-for="t in allTypes" :key="t">
-                        <option :value="t" x-text="capitalize(t)"></option>
-                      </template>
-                    </select>
+                    </div>
                   </span>
                 </template>
                 <template x-if="chip.type === 'total'">
@@ -166,6 +163,7 @@
             <button @click="addMoveChip('type'); moveShowAddMenu = false">Type</button>
             <button @click="addMoveChip('learners'); moveShowAddMenu = false">Min Learners</button>
             <button @click="addMoveChip('pokemon'); moveShowAddMenu = false">Learned By</button>
+            <button @click="addMoveChip('category'); moveShowAddMenu = false">Category</button>
           </div>
         </div>
 
@@ -188,6 +186,22 @@
                 </template>
                 <template x-if="chip.type === 'pokemon'">
                   <input type="text" x-model="chip.value" placeholder="Pokémon name..." @keyup.enter="commitMoveChip(chip)">
+                </template>
+                <template x-if="chip.type === 'category'">
+                  <span class="autocomplete-wrapper">
+                    <input type="text" x-model="chip.value"
+                           placeholder="Type to search..."
+                           @input="filterSuggestions(chip)"
+                           @focus="chip.showDropdown = chip.suggestions.length > 0"
+                           @keyup.enter="selectSuggestion(chip, chip.value)">
+                    <div class="autocomplete-dropdown" x-show="chip.showDropdown && chip.suggestions.length"
+                         @click.outside="chip.showDropdown = false">
+                      <template x-for="s in chip.suggestions" :key="s">
+                        <div class="autocomplete-item" @click="selectSuggestion(chip, s)"
+                             x-text="capitalize(s)"></div>
+                      </template>
+                    </div>
+                  </span>
                 </template>
                 <button class="chip-commit" @click="commitMoveChip(chip)">✓</button>
               </div>

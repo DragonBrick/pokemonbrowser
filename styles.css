@@ -97,6 +97,7 @@ body {
 .chip-total { border-color: #f2c94c; }
 .chip-learners { border-color: var(--chip-stat); }
 .chip-pokemon { border-color: var(--chip-gen); }
+.chip-category { border-color: #f97316; }
 .chip-text { cursor: pointer; }
 .chip-remove {
   background: none; border: none; color: var(--text-dim);
@@ -209,6 +210,27 @@ body {
 .category-physical { background: #e74c3c; }
 .category-special { background: #3498db; }
 .category-status { background: #7f8c8d; }
+
+/* Autocomplete */
+.autocomplete-wrapper {
+  position: relative; display: inline-block;
+}
+.autocomplete-wrapper input {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 3px 6px; border-radius: 4px;
+  font-size: 0.75rem; outline: none; width: 130px;
+}
+.autocomplete-wrapper input:focus { border-color: var(--accent); }
+.autocomplete-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; max-height: 160px; overflow-y: auto; margin-top: 2px;
+}
+.autocomplete-item {
+  padding: 4px 8px; cursor: pointer; font-size: 0.75rem;
+  text-transform: capitalize; transition: background 0.1s;
+}
+.autocomplete-item:hover { background: var(--accent); color: #fff; }
 
 /* Description column */
 .col-desc {
