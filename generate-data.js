@@ -49,6 +49,7 @@ async function main() {
         stats[name] = s ? s.base_stat : 0;
       });
       const moves = detail.moves.map((m) => m.move.name);
+      const abilities = detail.abilities.map((a) => a.ability.name);
       pokemon.push({
         id,
         name: entry.name,
@@ -56,6 +57,10 @@ async function main() {
         stats,
         generation: generationForId(id),
         moves,
+        height: detail.height,
+        weight: detail.weight,
+        abilities,
+        base_experience: detail.base_experience,
       });
     } catch (e) {
       console.error(`  Failed for ${entry.name}: ${e.message}`);
