@@ -17,6 +17,10 @@ document.addEventListener('alpine:init', () => {
     moveSortDir: 'desc',
     filteredMoves: [],
     moveShowAddMenu: false,
+    showDetailView: null,
+    detailItem: null,
+    detailMoveSearch: '',
+    detailPokemonSearch: '',
 
     moveColumns: [
       { key: 'name', label: 'Move', sortable: true },
@@ -214,6 +218,20 @@ document.addEventListener('alpine:init', () => {
       return str.charAt(0).toUpperCase() + str.slice(1);
     },
 
+    statBarWidth(stat) {
+      return Math.round((stat / 255) * 100);
+    },
+
+    formatHeight(dm) {
+      if (dm == null) return '\u2014';
+      return (dm / 10).toFixed(1) + ' m';
+    },
+
+    formatWeight(hg) {
+      if (hg == null) return '\u2014';
+      return (hg / 10).toFixed(1) + ' kg';
+    },
+
     filterSuggestions(chip) {
       const q = (chip.value || '').toLowerCase().trim();
       let source = [];
@@ -402,6 +420,23 @@ document.addEventListener('alpine:init', () => {
       try {
         localStorage.setItem('pokemonColWidths', JSON.stringify(this.colWidths));
       } catch (e) {}
+    },
+
+    openPokemonDetail(p) {
+      this.showDetailView = 'pokemon';
+      this.detailItem = p;
+      this.detailPokemonSearch = '';
+    },
+
+    openMoveDetail(m) {
+      this.showDetailView = 'move';
+      this.detailItem = m;
+      this.detailMoveSearch = '';
+    },
+
+    closeDetail() {
+      this.showDetailView = null;
+      this.detailItem = null;
     },
   }));
 });
