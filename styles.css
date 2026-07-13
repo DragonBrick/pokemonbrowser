@@ -248,3 +248,116 @@ body {
   text-align: center; padding: 16px 0; color: var(--text-dim); font-size: 0.85rem;
 }
 .footer strong { color: var(--text); }
+
+/* Detail View */
+.detail-page {
+  padding: 20px 0;
+}
+.detail-back {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 16px; border-radius: 6px;
+  cursor: pointer; font-size: 0.9rem; margin-bottom: 20px;
+  transition: background 0.15s;
+}
+.detail-back:hover { background: var(--accent); color: #fff; }
+
+.detail-layout {
+  background: var(--surface); border-radius: 12px;
+  border: 1px solid var(--border); padding: 24px;
+}
+
+.detail-header {
+  display: flex; gap: 24px; align-items: flex-start;
+  margin-bottom: 24px; padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.detail-sprite {
+  flex-shrink: 0;
+}
+.detail-sprite img {
+  image-rendering: pixelated; border-radius: 12px;
+  background: var(--surface2);
+}
+.detail-info { flex: 1; }
+.detail-name {
+  font-size: 1.6rem; font-weight: 700; margin-bottom: 8px;
+  text-transform: capitalize;
+}
+.detail-types { display: flex; gap: 6px; margin-bottom: 12px; }
+.detail-meta {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;
+  font-size: 0.9rem; color: var(--text-dim);
+}
+.detail-meta strong { color: var(--text); }
+
+.detail-section { margin-bottom: 24px; }
+.detail-section h3 {
+  font-size: 1.1rem; font-weight: 600; margin-bottom: 12px;
+  color: var(--text);
+}
+
+/* Stats */
+.stat-list { max-width: 500px; }
+.stat-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.stat-label {
+  width: 50px; font-size: 0.8rem; color: var(--text-dim); font-weight: 600;
+}
+.stat-value {
+  width: 32px; text-align: right; font-size: 0.85rem;
+  font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.stat-bar-bg {
+  flex: 1; height: 12px; background: var(--surface2);
+  border-radius: 6px; overflow: hidden;
+}
+.stat-bar-fill {
+  height: 100%; border-radius: 6px; transition: width 0.3s;
+}
+.stat-hp { background: #ff5959; }
+.stat-attack { background: #f5ac78; }
+.stat-defense { background: #fae078; }
+.stat-special-attack { background: #9db7f5; }
+.stat-special-defense { background: #a7db8d; }
+.stat-speed { background: #fa92b2; }
+
+.stat-total {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+}
+.stat-total .stat-label { font-weight: 700; color: var(--accent); }
+.stat-total .stat-value { font-weight: 700; color: var(--accent); }
+
+/* Move detail stat boxes */
+.detail-stats-row {
+  display: flex; gap: 12px; margin-bottom: 24px;
+}
+.detail-stat-box {
+  flex: 1; background: var(--surface2); border-radius: 8px;
+  padding: 12px; text-align: center;
+}
+.detail-stat-label {
+  display: block; font-size: 0.75rem; color: var(--text-dim);
+  margin-bottom: 4px; text-transform: uppercase; font-weight: 600;
+}
+.detail-stat-value {
+  display: block; font-size: 1.3rem; font-weight: 700;
+}
+
+.detail-desc {
+  font-size: 0.95rem; line-height: 1.6; color: var(--text-dim);
+  background: var(--surface2); padding: 16px; border-radius: 8px;
+}
+
+/* Move/Pokemon chips in detail lists */
+.detail-move-list {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  max-height: 300px; overflow-y: auto; padding: 8px 0;
+}
+.detail-move-chip {
+  display: inline-block; padding: 4px 12px;
+  background: var(--surface2); border-radius: 16px;
+  font-size: 0.8rem; color: var(--text-dim);
+  text-transform: capitalize;
+}
