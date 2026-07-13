@@ -124,7 +124,7 @@
         </thead>
         <tbody>
           <template x-for="p in filteredPokemon" :key="p.id">
-            <tr>
+            <tr @dblclick="openPokemonDetail(p)">
               <td x-text="p.id" class="col-id"></td>
               <td class="col-sprite"><img :src="spriteUrl(p.id)" :alt="p.name" loading="lazy" width="60" height="60" @error="onSpriteError($event, p.id)"></td>
               <td class="col-name" x-text="capitalize(p.name)"></td>
@@ -151,6 +151,63 @@
       </div>
     </div>
     </div>
+
+    <template x-if="showDetailView === 'pokemon'">
+  <div class="detail-page">
+    <button class="detail-back" @click="closeDetail()">← Back to list</button>
+    <div class="detail-layout">
+      <div class="detail-header">
+        <div class="detail-sprite">
+          <img :src="spriteUrl(detailItem.id)" :alt="detailItem.name" width="200" height="200"
+               @error="onSpriteError($event, detailItem.id)">
+        </div>
+        <div class="detail-info">
+          <h2 class="detail-name">#<span x-text="detailItem.id"></span> <span x-text="capitalize(detailItem.name)"></span></h2>
+          <div class="detail-types">
+            <template x-for="t in detailItem.types" :key="t">
+              <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+            </template>
+          </div>
+          <div class="detail-meta">
+            <div><strong>Generation:</strong> <span x-text="detailItem.generation"></span></div>
+            <div><strong>Height:</strong> <span x-text="formatHeight(detailItem.height)"></span></div>
+            <div><strong>Weight:</strong> <span x-text="formatWeight(detailItem.weight)"></span></div>
+            <div><strong>Abilities:</strong> <span x-text="(detailItem.abilities || []).map(a => capitalize(a)).join(', ') || '—'"></span></div>
+            <div><strong>Base XP:</strong> <span x-text="detailItem.base_experience != null ? detailItem.base_experience : '—'"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h3>Base Stats</h3>
+        <div class="stat-list">
+          <template x-for="s in ['hp','attack','defense','special-attack','special-defense','speed']" :key="s">
+            <div class="stat-row">
+              <span class="stat-label" x-text="statLabel(s)"></span>
+              <span class="stat-value" x-text="detailItem.stats[s]"></span>
+              <div class="stat-bar-bg">
+                <div class="stat-bar-fill" :style="'width:' + statBarWidth(detailItem.stats[s]) + '%'"
+                     :class="'stat-' + s"></div>
+              </div>
+            </div>
+          </template>
+          <div class="stat-total">
+            <span class="stat-label">Total</span>
+            <span class="stat-value" x-text="statTotal(detailItem)"></span>
+          </div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h3>Moves</h3>
+        <input type="text" class="search-input" placeholder="Search moves..." x-model="detailPokemonSearch">
+        <div class="detail-move-list">
+          <template x-for="m in detailItem.moves.filter(m => !detailPokemonSearch || m.includes(detailPokemonSearch.toLowerCase()))" :key="m">
+            <span class="detail-move-chip" x-text="m.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></span>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
     <div x-show="activeTab === 'moves'">
     <div class="controls">
@@ -226,7 +283,7 @@
         </thead>
         <tbody>
           <template x-for="m in filteredMoves" :key="m.name">
-            <tr>
+            <tr @dblclick="openMoveDetail(m)">
               <td class="col-name" x-text="capitalize(m.name)"></td>
               <td class="col-types">
                 <span class="type-badge" :class="'type-' + m.type" x-show="m.type" x-text="capitalize(m.type)"></span>
@@ -251,6 +308,54 @@
       </div>
     </div>
     </div>
+
+    <template x-if="showDetailView === 'move'">
+  <div class="detail-page">
+    <button class="detail-back" @click="closeDetail()">← Back to list</button>
+    <div class="detail-layout">
+      <div class="detail-header">
+        <div class="detail-info">
+          <h2 class="detail-name" x-text="capitalize(detailItem.name)"></h2>
+          <div class="detail-types">
+            <span class="type-badge" :class="'type-' + detailItem.type" x-text="capitalize(detailItem.type)"></span>
+            <span class="category-badge" :class="'category-' + detailItem.damage_class" x-text="capitalize(detailItem.damage_class)"></span>
+          </div>
+        </div>
+      </div>
+      <div class="detail-stats-row">
+        <div class="detail-stat-box">
+          <span class="detail-stat-label">Power</span>
+          <span class="detail-stat-value" x-text="detailItem.power != null ? detailItem.power : '—'"></span>
+        </div>
+        <div class="detail-stat-box">
+          <span class="detail-stat-label">Accuracy</span>
+          <span class="detail-stat-value" x-text="detailItem.accuracy != null ? detailItem.accuracy + '%' : '—'"></span>
+        </div>
+        <div class="detail-stat-box">
+          <span class="detail-stat-label">PP</span>
+          <span class="detail-stat-value" x-text="detailItem.pp != null ? detailItem.pp : '—'"></span>
+        </div>
+        <div class="detail-stat-box">
+          <span class="detail-stat-label">Gen</span>
+          <span class="detail-stat-value" x-text="detailItem.gen"></span>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h3>Description</h3>
+        <p class="detail-desc" x-text="detailItem.description || 'No description available.'"></p>
+      </div>
+      <div class="detail-section">
+        <h3>Learned By</h3>
+        <input type="text" class="search-input" placeholder="Search Pokémon..." x-model="detailMoveSearch">
+        <div class="detail-move-list">
+          <template x-for="p in detailItem.pokemon.filter(p => !detailMoveSearch || p.includes(detailMoveSearch.toLowerCase()))" :key="p">
+            <span class="detail-move-chip" x-text="capitalize(p)"></span>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
     <footer class="footer">
       <span x-show="activeTab === 'pokemon'">Showing <strong x-text="filteredPokemon.length"></strong> of <strong x-text="pokemon.length"></strong> Pokémon</span>
