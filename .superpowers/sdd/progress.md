@@ -1,2 +1,2 @@
-# SDD Progress - Autocomplete Filters Plan
+# SDD Progress - Detail View Plan
 

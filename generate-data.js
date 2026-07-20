@@ -110,4 +110,49 @@ async function main() {
   console.log(`Saved ${movesData.length} moves to moves-data.js`);
 }
 
-main().catch(console.error);
+async function generateAbilities() {
+  console.log('Loading Pokémon data...');
+  const pokemon = JSON.parse(fs.readFileSync('pokemon-data.json', 'utf-8'));
+  const abilityMap = {};
+  for (const p of pokemon) {
+    for (const a of p.abilities) {
+      if (!abilityMap[a]) abilityMap[a] = [];
+      abilityMap[a].push(p.name);
+    }
+  }
+  const names = Object.keys(abilityMap);
+  console.log(`Found ${names.length} unique abilities`);
+
+  const abilityListRes = await fetch('https://pokeapi.co/api/v2/ability?limit=500');
+  const abilityUrlMap = {};
+  for (const entry of abilityListRes.results) {
+    if (abilityMap[entry.name]) abilityUrlMap[entry.name] = entry.url;
+  }
+  const entries = Object.entries(abilityUrlMap);
+  const abilitiesData = [];
+  for (let i = 0; i < entries.length; i += 10) {
+    const batch = entries.slice(i, i + 10);
+    await Promise.all(batch.map(async ([name, url]) => {
+      try {
+        const detail = await fetch(url);
+        const effect = (detail.effect_entries || []).find((e) => e.language.name === 'en');
+        const genStr = detail.generation ? detail.generation.name.replace('generation-', '') : null;
+        abilitiesData.push({
+          name,
+          description: effect ? effect.effect.replace(/[\n\f]/g, ' ').replace(/\s{2,}/g, ' ').trim() : null,
+          generation: genStr ? parseInt(genStr) : null,
+          pokemon: abilityMap[name] || [],
+        });
+      } catch (e) {
+        console.error(`  Failed ${name}: ${e.message}`);
+      }
+    }));
+    if ((i + 10) % 100 === 0 || i + 10 >= entries.length) {
+      console.log(`  ${Math.min(i + 10, entries.length)}/${entries.length}`);
+    }
+  }
+  fs.writeFileSync('abilities-data.js', 'window.__ABILITIES_DATA__ = ' + JSON.stringify(abilitiesData) + ';');
+  console.log(`Saved ${abilitiesData.length} abilities to abilities-data.js`);
+}
+
+main().then(() => generateAbilities()).catch(console.error);

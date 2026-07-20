@@ -1,23 +1,15 @@
-### Task 3 Report: Create app.js
+# Task 3 Report: Detail View Templates
 
-**Status:** DONE
+**Commit:** `1d8a5b2c312328c4b9e00f76027c25cf0ff116dc`
 
-**Files changed:**
-- Created: `app.js` (218 lines)
+## Changes Made
 
-**What was implemented:**
-- `Alpine.data('pokemonBrowser', ...)` component registered on `alpine:init`
-- `init()` — loads from localStorage cache, then fetches `pokemon-data.json`, stores cache
-- `recompute()` — filter-search-sort pipeline: name search, generation/stat/move chips, multi-key sorting with asc/desc
-- `toggleSort(key)` — three-state cycle: asc → desc → reset to id/asc
-- `addChip(type)`, `commitChip(chip)`, `removeChip(index)`, `chipLabel(chip)` — filter chip management
-- `spriteUrl(id)`, `capitalize(str)`, `statTotal(p)`, `statLabel(key)` — display helpers
-- `refreshFromApi()` — fetches all Pokémon from PokeAPI with progress display, triggers JSON download
-- 13 column definitions for the data table
+1. **Pokémon table rows** — Added `@dblclick="openPokemonDetail(p)"` to `<tr>` in the Pokémon table.
+2. **Moves table rows** — Added `@dblclick="openMoveDetail(m)"` to `<tr>` in the Moves table.
+3. **Pokémon detail template** — Inserted `<template x-if="showDetailView === 'pokemon'">` block after the Pokémon tab content, containing sprite, info, base stats (with stat bars), and move list.
+4. **Move detail template** — Inserted `<template x-if="showDetailView === 'move'">` block after the Moves tab content, containing type/category badges, power/accuracy/PP/gen stats, description, and learned-by list.
 
-**Verification done:**
-- Confirmed file content matches the task brief code exactly (218 lines)
-- Passed `node -c app.js` syntax check (no errors)
-- Confirmed `index.html` line 9 references `app.js` via `<script defer src="app.js">`
+## Summary
 
-**Issues:** None
+- `index.html` — 107 insertions, 2 deletions
+- All templates reference Alpine.js component state (`showDetailView`, `detailItem`, `detailPokemonSearch`, `detailMoveSearch`) and methods (`openPokemonDetail`, `openMoveDetail`, `closeDetail`, `spriteUrl`, `onSpriteError`, `capitalize`, `formatHeight`, `formatWeight`, `statLabel`, `statBarWidth`, `statTotal`) expected in the existing `pokemonBrowser` component.

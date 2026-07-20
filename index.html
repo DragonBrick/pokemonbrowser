@@ -12,359 +12,1091 @@
       <div class="header-left">
         <h1 class="title">Pokémon Browser</h1>
         <nav class="tabs">
-          <button :class="{ active: activeTab === 'pokemon' }" @click="activeTab = 'pokemon'">Pokémon</button>
-          <button :class="{ active: activeTab === 'moves' }" @click="activeTab = 'moves'">Moves</button>
+          <button :class="{ active: activeTab === 'home' }" @click="switchTab('home')" @dblclick="closeDetail()">Home</button>
+          <button :class="{ active: activeTab === 'pokemon' }" @click="switchTab('pokemon')" @dblclick="closeDetail()">Pokémon</button>
+          <button :class="{ active: activeTab === 'moves' }" @click="switchTab('moves')" @dblclick="closeDetail()">Moves</button>
+          <button :class="{ active: activeTab === 'abilities' }" @click="switchTab('abilities')" @dblclick="closeDetail()">Abilities</button>
+          <button :class="{ active: activeTab === 'teambuilder' }" @click="switchTab('teambuilder')" @dblclick="closeDetail()">Team Builder</button>
+          <button :class="{ active: activeTab === 'wallpaper' }" @click="switchTab('wallpaper')" @dblclick="closeDetail()">Wallpaper</button>
+          <button :class="{ active: activeTab === 'speedrun' }" @click="switchTab('speedrun')" @dblclick="closeDetail()" x-show="pokemon.length">Speedrun</button>
         </nav>
       </div>
       <div class="header-actions">
         <span class="result-count" x-show="activeTab === 'pokemon'" x-text="`${filteredPokemon.length} / ${pokemon.length} Pokémon`"></span>
         <span class="result-count" x-show="activeTab === 'moves'" x-text="`${filteredMoves.length} / ${moves.length} Moves`"></span>
+        <span class="result-count" x-show="activeTab === 'abilities'" x-text="`${filteredAbilities.length} / ${abilities.length} Abilities`"></span>
+
       </div>
     </header>
 
-    <div x-show="activeTab === 'pokemon'">
-    <div class="controls">
-      <input type="text" class="search-input" placeholder="Search by name..." x-model="search" @input="recompute()">
-
-      <div class="chip-bar">
-        <div class="add-chip-wrapper">
-          <button class="chip chip-add" @click="showAddMenu = !showAddMenu">+ Add Filter</button>
-          <div class="add-chip-menu" x-show="showAddMenu" @click.outside="showAddMenu = false">
-            <button @click="addChip('generation'); showAddMenu = false">Generation</button>
-            <button @click="addChip('stat'); showAddMenu = false">Stat</button>
-            <button @click="addChip('move'); showAddMenu = false">Move</button>
-            <button @click="addChip('type'); showAddMenu = false">Type</button>
-            <button @click="addChip('total'); showAddMenu = false">Total</button>
+    <div x-show="srCountdown" class="sr-overlay" x-cloak @keydown.escape.window="srForfeit(); activeTab = 'home'" @keydown.enter.window="srSkipCountdown()">
+      <div class="sr-overlay-box">
+        <div class="sr-overlay-targets">
+          <div class="sr-overlay-card">
+            <span class="sr-overlay-label">Start</span>
+            <span class="sr-overlay-type" x-text="srStart ? srLabelType(srStart.type) : ''"></span>
+            <span class="sr-overlay-name" x-text="srStart ? srLabel(srStart) : ''"></span>
+          </div>
+          <div class="sr-overlay-arrow">→</div>
+          <div class="sr-overlay-card">
+            <span class="sr-overlay-label">Target</span>
+            <span class="sr-overlay-type" x-text="srTarget ? srLabelType(srTarget.type) : ''"></span>
+            <span class="sr-overlay-name" x-text="srTarget ? srLabel(srTarget) : ''"></span>
           </div>
         </div>
-
-        <template x-for="(chip, i) in chips" :key="i">
-          <div class="chip" :class="'chip-' + chip.type" @click.stop>
-            <template x-if="!chip.editing">
-              <span class="chip-text" @click="chip.editing = true" x-text="chipLabel(chip)"></span>
-            </template>
-            <template x-if="chip.editing">
-              <div class="chip-edit">
-                <template x-if="chip.type === 'generation'">
-                  <select x-model="chip.value" @change="commitChip(chip)">
-                    <option value="1">Gen 1</option>
-                    <option value="2">Gen 2</option>
-                    <option value="3">Gen 3</option>
-                    <option value="4">Gen 4</option>
-                    <option value="5">Gen 5</option>
-                    <option value="6">Gen 6</option>
-                    <option value="7">Gen 7</option>
-                    <option value="8">Gen 8</option>
-                    <option value="9">Gen 9</option>
-                  </select>
-                </template>
-                <template x-if="chip.type === 'stat'">
-                  <span class="chip-edit-row">
-                    <select x-model="chip.stat">
-                      <option value="hp">HP</option>
-                      <option value="attack">Attack</option>
-                      <option value="defense">Defense</option>
-                      <option value="special-attack">Sp.Atk</option>
-                      <option value="special-defense">Sp.Def</option>
-                      <option value="speed">Speed</option>
-                    </select>
-                    <select x-model="chip.operator">
-                      <option value=">">&gt;</option>
-                      <option value="<">&lt;</option>
-                    </select>
-                    <input type="number" x-model="chip.value" placeholder="0" min="0" max="255" @keyup.enter="commitChip(chip)">
-                  </span>
-                </template>
-                <template x-if="chip.type === 'move' || chip.type === 'type'">
-                  <span class="autocomplete-wrapper">
-                    <input type="text" x-model="chip.value"
-                           placeholder="Type to search..."
-                           @input="filterSuggestions(chip)"
-                           @focus="chip.showDropdown = chip.suggestions.length > 0"
-                           @keyup.enter="selectSuggestion(chip, chip.value)">
-                    <div class="autocomplete-dropdown" x-show="chip.showDropdown && chip.suggestions.length"
-                         @click.outside="chip.showDropdown = false">
-                      <template x-for="s in chip.suggestions" :key="s">
-                        <div class="autocomplete-item" @click="selectSuggestion(chip, s)"
-                             x-text="capitalize(s)"></div>
-                      </template>
-                    </div>
-                  </span>
-                </template>
-                <template x-if="chip.type === 'total'">
-                  <span class="chip-edit-row">
-                    <select x-model="chip.operator">
-                      <option value=">">&gt;</option>
-                      <option value="<">&lt;</option>
-                    </select>
-                    <input type="number" x-model="chip.value" placeholder="0" min="0" max="1000" @keyup.enter="commitChip(chip)">
-                  </span>
-                </template>
-                <button class="chip-commit" @click="commitChip(chip)">✓</button>
-              </div>
-            </template>
-            <button class="chip-remove" @click="removeChip(i)">&times;</button>
-          </div>
-        </template>
+        <div class="sr-overlay-num" x-text="srCountdown || ''"></div>
+        <div class="sr-overlay-prep">Prepare!</div>
       </div>
     </div>
 
-    <div class="table-wrapper">
-      <table class="poke-table">
-        <thead>
-          <tr>
-            <template x-for="col in columns" :key="col.key">
-              <th :class="{ sortable: col.sortable, sorted: sortKey === col.key }" @click="col.sortable && toggleSort(col.key)" :style="colWidths[col.key] ? `width:${colWidths[col.key]}px` : ''">
-                <span x-text="col.label"></span>
-                <span class="sort-arrow" x-show="sortKey === col.key" x-text="sortDir === 'asc' ? '▲' : '▼'"></span>
-                <span class="resize-handle" @mousedown.stop="startResize($event, col.key)"></span>
-              </th>
+    <div x-show="(srStart && !srComplete) || srForfeitMsg" class="sr-hud" :class="{ 'sr-hud-expanded': srHudExpanded }">
+      <template x-if="srForfeitMsg">
+        <span class="sr-hud-forfeit" x-text="srForfeitMsg"></span>
+      </template>
+      <template x-if="!srForfeitMsg">
+        <div class="sr-hud-body">
+          <span class="sr-hud-label">Find: <strong x-text="srLabel(srTarget)"></strong></span>
+          <button class="sr-hud-toggle" @click="srHudExpanded = !srHudExpanded" x-text="srHudExpanded ? '▾' : '▸'"></button>
+          <div x-show="srHudExpanded" class="sr-hud-detail">
+            <span><strong x-text="srClicks"></strong> clicks</span>
+            <span><strong x-text="srFormat(srElapsed)"></strong></span>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div x-show="activeTab === 'home'">
+      <div class="home-section">
+        <h2 class="home-heading">Today's Features</h2>
+        <div class="home-cards">
+
+          <div class="home-card" @click="activeTab = 'pokemon'; openPokemonDetail(pokemon[dailyIndex(pokemon)])">
+            <div class="home-card-icon">Pokémon</div>
+            <template x-if="pokemon.length">
+              <template x-for="item in [pokemon[dailyIndex(pokemon)]]" :key="item.id">
+                <div class="home-card-body">
+                  <img :src="spriteUrl(item.id)" :alt="item.name" width="96" height="96"
+                       @error="onSpriteError($event, item.id)">
+                  <div class="home-card-name" x-text="capitalize(item.name)"></div>
+                  <div class="detail-types">
+                    <template x-for="t in item.types" :key="t">
+                      <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                    </template>
+                  </div>
+                </div>
+              </template>
             </template>
-          </tr>
-        </thead>
-        <tbody>
-          <template x-for="p in filteredPokemon" :key="p.id">
-            <tr @dblclick="openPokemonDetail(p)">
-              <td x-text="p.id" class="col-id"></td>
-              <td class="col-sprite"><img :src="spriteUrl(p.id)" :alt="p.name" loading="lazy" width="60" height="60" @error="onSpriteError($event, p.id)"></td>
-              <td class="col-name" x-text="capitalize(p.name)"></td>
-              <td class="col-types">
-                <template x-for="t in p.types" :key="t">
-                  <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
-                </template>
-              </td>
-              <td class="col-stat" x-text="p.stats.hp"></td>
-              <td class="col-stat" x-text="p.stats.attack"></td>
-              <td class="col-stat" x-text="p.stats.defense"></td>
-              <td class="col-stat" x-text="p.stats['special-attack']"></td>
-              <td class="col-stat" x-text="p.stats['special-defense']"></td>
-              <td class="col-stat" x-text="p.stats.speed"></td>
-              <td class="col-stat col-total" x-text="statTotal(p)"></td>
-              <td class="col-gen" x-text="p.generation"></td>
-              <td class="col-moves" x-text="p.moves.length"></td>
-            </tr>
+          </div>
+
+          <div class="home-card" @click="activeTab = 'moves'; openMoveDetail(moves[dailyIndex(moves)])">
+            <div class="home-card-icon">Move</div>
+            <template x-if="moves.length">
+              <template x-for="item in [moves[dailyIndex(moves)]]" :key="item.name">
+                <div class="home-card-body">
+                  <div class="home-card-name" x-text="capitalize(item.name)"></div>
+                  <span class="type-badge" :class="'type-' + item.type" x-show="item.type" x-text="capitalize(item.type)"></span>
+                  <div class="home-card-stats">
+                    <span x-show="item.power != null">Power: <strong x-text="item.power"></strong></span>
+                    <span x-show="item.accuracy != null">Acc: <strong x-text="item.accuracy"></strong></span>
+                    <span x-show="item.pp != null">PP: <strong x-text="item.pp"></strong></span>
+                  </div>
+                  <div class="home-card-desc" x-text="(item.description || '').slice(0, 120) + ((item.description || '').length > 120 ? '…' : '')"></div>
+                </div>
+              </template>
+            </template>
+          </div>
+
+          <div class="home-card" @click="activeTab = 'abilities'; openAbilityDetail(abilities[dailyIndex(abilities)])">
+            <div class="home-card-icon">Ability</div>
+            <template x-if="abilities.length">
+              <template x-for="item in [abilities[dailyIndex(abilities)]]" :key="item.name">
+                <div class="home-card-body">
+                  <div class="home-card-name" x-text="capitalize(item.name)"></div>
+                  <div class="home-card-meta">Gen <span x-text="item.generation || '—'"></span></div>
+                  <div class="home-card-desc" x-text="(item.description || '').slice(0, 120) + ((item.description || '').length > 120 ? '…' : '')"></div>
+                </div>
+              </template>
+            </template>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="home-section home-info">
+        <div class="home-info-header">
+          <h2 class="home-heading">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card">
+            <div class="info-icon">P</div>
+            <div class="info-body">
+              <div class="info-title">Pokémon</div>
+              <div class="info-desc">Browse all Pokémon, view stats, evolution chains, and moves. Double-click a row or click an evolution node to open details.</div>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-icon">M</div>
+            <div class="info-body">
+              <div class="info-title">Moves</div>
+              <div class="info-desc">Search moves by name, type, or category. See which Pokémon learn each move and double-click chips to jump to their details.</div>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-icon">A</div>
+            <div class="info-body">
+              <div class="info-title">Abilities</div>
+              <div class="info-desc">Browse abilities with descriptions and learn which Pokémon have them. Double-click ability chips to navigate.</div>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-icon">T</div>
+            <div class="info-body">
+              <div class="info-title">Team Builder</div>
+              <div class="info-desc">Build and save up to 10 teams. Double-click a team name to rename it. Use the Import/Export buttons to share teams in Pokémon Showdown format.</div>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-icon">W</div>
+            <div class="info-body">
+              <div class="info-title">Wallpaper</div>
+              <div class="info-desc">Generate a custom wallpaper for any Pokémon with stats, abilities, and a Pokédex fact. Download as a 1920×1080 PNG.</div>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-icon">S</div>
+            <div class="info-body">
+              <div class="info-title">Speedrun</div>
+              <div class="info-desc">Navigate from a starting entity to a target in as few clicks as possible. Choose types (Pokémon, Move, Ability) and try to beat your best time!</div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-section" x-show="recentlyViewed.length">
+        <h2 class="home-heading">Recently Viewed</h2>
+        <div class="recent-list">
+          <template x-for="item in recentlyViewed" :key="item.type + ':' + item.name">
+            <span class="recent-chip" :class="'recent-' + item.type" @click="openFromRecentlyViewed(item)">
+              <span class="recent-type-icon" x-text="item.type === 'pokemon' ? 'P' : item.type === 'move' ? 'M' : 'A'"></span>
+              <span x-text="capitalize(item.name)"></span>
+            </span>
           </template>
-        </tbody>
-      </table>
-      <div class="no-results" x-show="filteredPokemon.length === 0 && pokemon.length > 0">
-        No Pokémon match your filters.
+        </div>
       </div>
-    </div>
     </div>
 
-    <template x-if="showDetailView === 'pokemon'">
-  <div class="detail-page">
-    <button class="detail-back" @click="closeDetail()">← Back to list</button>
-    <div class="detail-layout">
-      <div class="detail-header">
-        <div class="detail-sprite">
-          <img :src="spriteUrl(detailItem.id)" :alt="detailItem.name" width="200" height="200"
-               @error="onSpriteError($event, detailItem.id)">
-        </div>
-        <div class="detail-info">
-          <h2 class="detail-name">#<span x-text="detailItem.id"></span> <span x-text="capitalize(detailItem.name)"></span></h2>
-          <div class="detail-types">
-            <template x-for="t in detailItem.types" :key="t">
-              <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
-            </template>
-          </div>
-          <div class="detail-meta">
-            <div><strong>Generation:</strong> <span x-text="detailItem.generation"></span></div>
-            <div><strong>Height:</strong> <span x-text="formatHeight(detailItem.height)"></span></div>
-            <div><strong>Weight:</strong> <span x-text="formatWeight(detailItem.weight)"></span></div>
-            <div><strong>Abilities:</strong> <span x-text="(detailItem.abilities || []).map(a => capitalize(a)).join(', ') || '—'"></span></div>
-            <div><strong>Base XP:</strong> <span x-text="detailItem.base_experience != null ? detailItem.base_experience : '—'"></span></div>
-          </div>
-        </div>
-      </div>
-      <div class="detail-section">
-        <h3>Base Stats</h3>
-        <div class="stat-list">
-          <template x-for="s in ['hp','attack','defense','special-attack','special-defense','speed']" :key="s">
-            <div class="stat-row">
-              <span class="stat-label" x-text="statLabel(s)"></span>
-              <span class="stat-value" x-text="detailItem.stats[s]"></span>
-              <div class="stat-bar-bg">
-                <div class="stat-bar-fill" :style="'width:' + statBarWidth(detailItem.stats[s]) + '%'"
-                     :class="'stat-' + s"></div>
+    <div x-show="activeTab === 'pokemon'">
+      <div x-show="showDetailView == 'pokemon'">
+        <div class="detail-page">
+          <button class="detail-back" @click="closeDetail()">← Back to list</button>
+          <div class="detail-layout">
+            <div class="detail-header">
+              <div class="detail-sprite">
+                <img :src="spriteUrl(detailItem.id)" :alt="detailItem.name" width="200" height="200"
+                     @error="onSpriteError($event, detailItem.id)">
+              </div>
+              <div class="detail-info">
+                <h2 class="detail-name">#<span x-text="detailItem.id"></span> <span x-text="capitalize(detailItem.name)"></span></h2>
+                <div class="detail-types">
+                  <template x-for="t in detailItem.types" :key="t">
+                    <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                  </template>
+                </div>
+                <div class="detail-meta">
+                  <div><strong>Generation:</strong> <span x-text="detailItem.generation"></span></div>
+                  <div><strong>Height:</strong> <span x-text="formatHeight(detailItem.height)"></span></div>
+                  <div><strong>Weight:</strong> <span x-text="formatWeight(detailItem.weight)"></span></div>
+                  <div><strong>Abilities:</strong>
+                    <template x-for="a in (detailItem.abilities || [])" :key="a">
+                      <span class="ability-chip" @dblclick="openAbilityFromDetail(a)" x-text="capitalize(a)"></span>
+                    </template>
+                    <span x-show="!(detailItem.abilities || []).length">—</span>
+                  </div>
+                  <div><strong>Base XP:</strong> <span x-text="detailItem.base_experience != null ? detailItem.base_experience : '—'"></span></div>
+                </div>
               </div>
             </div>
-          </template>
-          <div class="stat-total">
-            <span class="stat-label">Total</span>
-            <span class="stat-value" x-text="statTotal(detailItem)"></span>
-          </div>
-        </div>
-      </div>
-      <div class="detail-section">
-        <h3>Moves</h3>
-        <input type="text" class="search-input" placeholder="Search moves..." x-model="detailPokemonSearch">
-        <div class="detail-move-list">
-          <template x-for="m in detailItem.moves.filter(m => !detailPokemonSearch || m.includes(detailPokemonSearch.toLowerCase()))" :key="m">
-            <span class="detail-move-chip" x-text="m.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></span>
-          </template>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-    <div x-show="activeTab === 'moves'">
-    <div class="controls">
-      <input type="text" class="search-input" placeholder="Search moves..." x-model="moveSearch" @input="moveRecompute()">
-
-      <div class="chip-bar">
-        <div class="add-chip-wrapper">
-          <button class="chip chip-add" @click="moveShowAddMenu = !moveShowAddMenu">+ Add Filter</button>
-          <div class="add-chip-menu" x-show="moveShowAddMenu" @click.outside="moveShowAddMenu = false">
-            <button @click="addMoveChip('type'); moveShowAddMenu = false">Type</button>
-            <button @click="addMoveChip('learners'); moveShowAddMenu = false">Min Learners</button>
-            <button @click="addMoveChip('pokemon'); moveShowAddMenu = false">Learned By</button>
-            <button @click="addMoveChip('category'); moveShowAddMenu = false">Category</button>
-          </div>
-        </div>
-
-        <template x-for="(chip, i) in moveChips" :key="i">
-          <div class="chip" :class="'chip-' + chip.type" @click.stop>
-            <template x-if="!chip.editing">
-              <span class="chip-text" @click="chip.editing = true" x-text="moveChipLabel(chip)"></span>
-            </template>
-            <template x-if="chip.editing">
-              <div class="chip-edit">
-                <template x-if="chip.type === 'type'">
-                  <select x-model="chip.value" @change="commitMoveChip(chip)">
-                    <template x-for="t in allTypes" :key="t">
-                      <option :value="t" x-text="capitalize(t)"></option>
-                    </template>
-                  </select>
-                </template>
-                <template x-if="chip.type === 'learners'">
-                  <input type="number" x-model="chip.value" placeholder="10" min="0" @keyup.enter="commitMoveChip(chip)">
-                </template>
-                <template x-if="chip.type === 'pokemon'">
-                  <input type="text" x-model="chip.value" placeholder="Pokémon name..." @keyup.enter="commitMoveChip(chip)">
-                </template>
-                <template x-if="chip.type === 'category'">
-                  <span class="autocomplete-wrapper">
-                    <input type="text" x-model="chip.value"
-                           placeholder="Type to search..."
-                           @input="filterSuggestions(chip)"
-                           @focus="chip.showDropdown = chip.suggestions.length > 0"
-                           @keyup.enter="selectSuggestion(chip, chip.value)">
-                    <div class="autocomplete-dropdown" x-show="chip.showDropdown && chip.suggestions.length"
-                         @click.outside="chip.showDropdown = false">
-                      <template x-for="s in chip.suggestions" :key="s">
-                        <div class="autocomplete-item" @click="selectSuggestion(chip, s)"
-                             x-text="capitalize(s)"></div>
+            <div class="detail-body">
+              <div class="detail-left">
+            <div class="detail-section" x-show="getEvolutionChain(detailItem.id)">
+              <h3>Evolution Chain</h3>
+              <div class="evo-chain">
+                <template x-for="(stage, si) in getEvolutionChain(detailItem.id)" :key="si">
+                  <div class="evo-group">
+                    <div class="evo-stage">
+                      <template x-for="evo in stage" :key="evo.id">
+                        <div class="evo-node" @dblclick="openPokemonFromDetail(evo.name)" :class="{ 'evo-current': evo.id === detailItem.id }">
+                          <img :src="spriteUrl(evo.id)" :alt="evo.name" width="48" height="48" @error="onSpriteError($event, evo.id)">
+                          <span class="evo-name" x-text="capitalize(evo.name)"></span>
+                        </div>
                       </template>
                     </div>
-                  </span>
+                    <span class="evo-arrow" x-show="si < getEvolutionChain(detailItem.id).length - 1"></span>
+                  </div>
                 </template>
-                <button class="chip-commit" @click="commitMoveChip(chip)">✓</button>
+              </div>
+            </div>
+            <div class="detail-section">
+              <h3>Base Stats</h3>
+              <div class="stat-list">
+                <template x-for="s in ['hp','attack','defense','special-attack','special-defense','speed']" :key="s">
+                  <div class="stat-row">
+                    <span class="stat-label" x-text="statLabel(s)"></span>
+                    <span class="stat-value" x-text="detailItem.stats[s]"></span>
+                    <div class="stat-bar-bg">
+                      <div class="stat-bar-fill" :style="'width:' + statBarWidth(detailItem.stats[s]) + '%'"
+                           :class="'stat-' + s"></div>
+                    </div>
+                  </div>
+                </template>
+                <div class="stat-total">
+                  <span class="stat-label">Total</span>
+                  <span class="stat-value" x-text="statTotal(detailItem)"></span>
+                </div>
+              </div>
+            </div>
+            <div class="detail-section">
+              <h3>Moves</h3>
+              <input type="text" class="search-input" placeholder="Search moves..." x-model="detailPokemonSearch">
+              <div class="detail-move-list">
+                <template x-for="m in detailItem.moves.filter(m => !detailPokemonSearch || m.includes(detailPokemonSearch.toLowerCase()))" :key="m">
+                  <span class="detail-move-chip" @dblclick="openMoveFromDetail(m)" x-text="m.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></span>
+                </template>
+              </div>
+            </div>
+              </div>
+              <div class="detail-right">
+                <div class="detail-section">
+                  <h3>Pokédex Entry</h3>
+                  <div class="detail-desc" x-text="factsData[detailItem.id] || 'No Pokédex entry available.'"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div x-show="showDetailView != 'pokemon'">
+        <div class="controls">
+          <input type="text" class="search-input" placeholder="Search by name..." x-model="search" @input="recompute()">
+
+          <div class="chip-bar">
+            <div class="add-chip-wrapper">
+              <button class="chip chip-add" @click="showAddMenu = !showAddMenu">+ Add Filter</button>
+              <div class="add-chip-menu" x-show="showAddMenu" @click.outside="showAddMenu = false">
+                <button @click="addChip('generation'); showAddMenu = false">Generation</button>
+                <button @click="addChip('stat'); showAddMenu = false">Stat</button>
+                <button @click="addChip('move'); showAddMenu = false">Move</button>
+                <button @click="addChip('type'); showAddMenu = false">Type</button>
+                <button @click="addChip('total'); showAddMenu = false">Total</button>
+              </div>
+            </div>
+
+            <template x-for="(chip, i) in chips" :key="i">
+              <div class="chip" :class="'chip-' + chip.type" @click.stop>
+                <template x-if="!chip.editing">
+                  <span class="chip-text" @click="chip.editing = true" x-text="chipLabel(chip)"></span>
+                </template>
+                <template x-if="chip.editing">
+                  <div class="chip-edit">
+                    <template x-if="chip.type === 'generation'">
+                      <select x-model="chip.value" @change="commitChip(chip)">
+                        <option value="1">Gen 1</option>
+                        <option value="2">Gen 2</option>
+                        <option value="3">Gen 3</option>
+                        <option value="4">Gen 4</option>
+                        <option value="5">Gen 5</option>
+                        <option value="6">Gen 6</option>
+                        <option value="7">Gen 7</option>
+                        <option value="8">Gen 8</option>
+                        <option value="9">Gen 9</option>
+                      </select>
+                    </template>
+                    <template x-if="chip.type === 'stat'">
+                      <span class="chip-edit-row">
+                        <select x-model="chip.stat">
+                          <option value="hp">HP</option>
+                          <option value="attack">Attack</option>
+                          <option value="defense">Defense</option>
+                          <option value="special-attack">Sp.Atk</option>
+                          <option value="special-defense">Sp.Def</option>
+                          <option value="speed">Speed</option>
+                        </select>
+                        <select x-model="chip.operator">
+                          <option value=">">&gt;</option>
+                          <option value="<">&lt;</option>
+                        </select>
+                        <input type="number" x-model="chip.value" placeholder="0" min="0" max="255" @keyup.enter="commitChip(chip)">
+                      </span>
+                    </template>
+                    <template x-if="chip.type === 'move' || chip.type === 'type'">
+                      <span class="autocomplete-wrapper">
+                        <input type="text" x-model="chip.value"
+                               placeholder="Type to search..."
+                               @input="filterSuggestions(chip)"
+                               @focus="chip.showDropdown = chip.suggestions.length > 0"
+                               @keyup.enter="selectSuggestion(chip, chip.value)">
+                        <div class="autocomplete-dropdown" x-show="chip.showDropdown && chip.suggestions.length"
+                             @click.outside="chip.showDropdown = false">
+                          <template x-for="s in chip.suggestions" :key="s">
+                            <div class="autocomplete-item" @click="selectSuggestion(chip, s)"
+                                 x-text="capitalize(s)"></div>
+                          </template>
+                        </div>
+                      </span>
+                    </template>
+                    <template x-if="chip.type === 'total'">
+                      <span class="chip-edit-row">
+                        <select x-model="chip.operator">
+                          <option value=">">&gt;</option>
+                          <option value="<">&lt;</option>
+                        </select>
+                        <input type="number" x-model="chip.value" placeholder="0" min="0" max="1000" @keyup.enter="commitChip(chip)">
+                      </span>
+                    </template>
+                    <button class="chip-commit" @click="commitChip(chip)">✓</button>
+                  </div>
+                </template>
+                <button class="chip-remove" @click="removeChip(i)">&times;</button>
               </div>
             </template>
-            <button class="chip-remove" @click="removeMoveChip(i)">&times;</button>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="poke-table">
+            <thead>
+              <tr>
+                <template x-for="col in columns" :key="col.key">
+                  <th :class="{ sortable: col.sortable, sorted: sortKey === col.key }" @click="col.sortable && toggleSort(col.key)" :style="colWidths[col.key] ? `width:${colWidths[col.key]}px` : ''">
+                    <span x-text="col.label"></span>
+                    <span class="sort-arrow" x-show="sortKey === col.key" x-text="sortDir === 'asc' ? '▲' : '▼'"></span>
+                    <span class="resize-handle" @mousedown.stop="startResize($event, col.key)"></span>
+                  </th>
+                </template>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="p in filteredPokemon" :key="p.id">
+                <tr @dblclick="openPokemonDetail(p)">
+                  <td x-text="p.id" class="col-id"></td>
+                  <td class="col-sprite"><img :src="spriteUrl(p.id)" :alt="p.name" loading="lazy" width="60" height="60" @error="onSpriteError($event, p.id)"></td>
+                  <td class="col-name" x-text="capitalize(p.name)"></td>
+                  <td class="col-types">
+                    <template x-for="t in p.types" :key="t">
+                      <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                    </template>
+                  </td>
+                  <td class="col-stat" x-text="p.stats.hp"></td>
+                  <td class="col-stat" x-text="p.stats.attack"></td>
+                  <td class="col-stat" x-text="p.stats.defense"></td>
+                  <td class="col-stat" x-text="p.stats['special-attack']"></td>
+                  <td class="col-stat" x-text="p.stats['special-defense']"></td>
+                  <td class="col-stat" x-text="p.stats.speed"></td>
+                  <td class="col-stat col-total" x-text="statTotal(p)"></td>
+                  <td class="col-gen" x-text="p.generation"></td>
+                  <td class="col-moves" x-text="p.moves.length"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <div class="no-results" x-show="filteredPokemon.length === 0 && pokemon.length > 0">
+            No Pokémon match your filters.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div x-show="activeTab === 'moves'">
+      <div x-show="showDetailView == 'move'">
+        <div class="detail-page">
+          <button class="detail-back" @click="closeDetail()">← Back to list</button>
+          <div class="detail-layout">
+            <div class="detail-header">
+              <div class="detail-info">
+                <h2 class="detail-name" x-text="capitalize(detailItem.name)"></h2>
+                <div class="detail-types">
+                  <span class="type-badge" :class="'type-' + detailItem.type" x-text="capitalize(detailItem.type)"></span>
+                  <span class="category-badge" :class="'category-' + detailItem.damage_class" x-text="capitalize(detailItem.damage_class)"></span>
+                </div>
+              </div>
+            </div>
+            <div class="detail-stats-row">
+              <div class="detail-stat-box">
+                <span class="detail-stat-label">Power</span>
+                <span class="detail-stat-value" x-text="detailItem.power != null ? detailItem.power : '—'"></span>
+              </div>
+              <div class="detail-stat-box">
+                <span class="detail-stat-label">Accuracy</span>
+                <span class="detail-stat-value" x-text="detailItem.accuracy != null ? detailItem.accuracy + '%' : '—'"></span>
+              </div>
+              <div class="detail-stat-box">
+                <span class="detail-stat-label">PP</span>
+                <span class="detail-stat-value" x-text="detailItem.pp != null ? detailItem.pp : '—'"></span>
+              </div>
+              <div class="detail-stat-box">
+                <span class="detail-stat-label">Gen</span>
+                <span class="detail-stat-value" x-text="detailItem.gen"></span>
+              </div>
+            </div>
+            <div class="detail-section">
+              <h3>Description</h3>
+              <p class="detail-desc" x-text="detailItem.description || 'No description available.'"></p>
+            </div>
+            <div class="detail-section">
+              <h3>Learned By</h3>
+              <input type="text" class="search-input" placeholder="Search Pokémon..." x-model="detailMoveSearch">
+              <div class="detail-move-list">
+                <template x-for="p in detailItem.pokemon.filter(p => !detailMoveSearch || p.includes(detailMoveSearch.toLowerCase()))" :key="p">
+                  <span class="detail-move-chip" @dblclick="openPokemonFromDetail(p)" x-text="capitalize(p)"></span>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div x-show="showDetailView != 'move'">
+        <div class="controls">
+          <input type="text" class="search-input" placeholder="Search moves..." x-model="moveSearch" @input="moveRecompute()">
+
+          <div class="chip-bar">
+            <div class="add-chip-wrapper">
+              <button class="chip chip-add" @click="moveShowAddMenu = !moveShowAddMenu">+ Add Filter</button>
+              <div class="add-chip-menu" x-show="moveShowAddMenu" @click.outside="moveShowAddMenu = false">
+                <button @click="addMoveChip('type'); moveShowAddMenu = false">Type</button>
+                <button @click="addMoveChip('learners'); moveShowAddMenu = false">Min Learners</button>
+                <button @click="addMoveChip('pokemon'); moveShowAddMenu = false">Learned By</button>
+                <button @click="addMoveChip('category'); moveShowAddMenu = false">Category</button>
+              </div>
+            </div>
+
+            <template x-for="(chip, i) in moveChips" :key="i">
+              <div class="chip" :class="'chip-' + chip.type" @click.stop>
+                <template x-if="!chip.editing">
+                  <span class="chip-text" @click="chip.editing = true" x-text="moveChipLabel(chip)"></span>
+                </template>
+                <template x-if="chip.editing">
+                  <div class="chip-edit">
+                    <template x-if="chip.type === 'type'">
+                      <select x-model="chip.value" @change="commitMoveChip(chip)">
+                        <template x-for="t in allTypes" :key="t">
+                          <option :value="t" x-text="capitalize(t)"></option>
+                        </template>
+                      </select>
+                    </template>
+                    <template x-if="chip.type === 'learners'">
+                      <input type="number" x-model="chip.value" placeholder="10" min="0" @keyup.enter="commitMoveChip(chip)">
+                    </template>
+                    <template x-if="chip.type === 'pokemon'">
+                      <input type="text" x-model="chip.value" placeholder="Pokémon name..." @keyup.enter="commitMoveChip(chip)">
+                    </template>
+                    <template x-if="chip.type === 'category'">
+                      <span class="autocomplete-wrapper">
+                        <input type="text" x-model="chip.value"
+                               placeholder="Type to search..."
+                               @input="filterSuggestions(chip)"
+                               @focus="chip.showDropdown = chip.suggestions.length > 0"
+                               @keyup.enter="selectSuggestion(chip, chip.value)">
+                        <div class="autocomplete-dropdown" x-show="chip.showDropdown && chip.suggestions.length"
+                             @click.outside="chip.showDropdown = false">
+                          <template x-for="s in chip.suggestions" :key="s">
+                            <div class="autocomplete-item" @click="selectSuggestion(chip, s)"
+                                 x-text="capitalize(s)"></div>
+                          </template>
+                        </div>
+                      </span>
+                    </template>
+                    <button class="chip-commit" @click="commitMoveChip(chip)">✓</button>
+                  </div>
+                </template>
+                <button class="chip-remove" @click="removeMoveChip(i)">&times;</button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="poke-table">
+            <thead>
+              <tr>
+                <template x-for="col in moveColumns" :key="col.key">
+                  <th :class="{ sortable: col.sortable, sorted: moveSortKey === col.key }" @click="col.sortable && toggleMoveSort(col.key)">
+                    <span x-text="col.label"></span>
+                    <span class="sort-arrow" x-show="moveSortKey === col.key" x-text="moveSortDir === 'asc' ? '▲' : '▼'"></span>
+                  </th>
+                </template>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="m in filteredMoves" :key="m.name">
+                <tr @dblclick="openMoveDetail(m)">
+                  <td class="col-name" x-text="capitalize(m.name)"></td>
+                  <td class="col-types">
+                    <span class="type-badge" :class="'type-' + m.type" x-show="m.type" x-text="capitalize(m.type)"></span>
+                    <span x-show="!m.type" class="text-dim">—</span>
+                  </td>
+                  <td class="col-stat" x-text="m.power != null ? m.power : '—'"></td>
+                  <td class="col-stat" x-text="m.accuracy != null ? m.accuracy : '—'"></td>
+                  <td class="col-stat" x-text="m.pp != null ? m.pp : '—'"></td>
+                  <td>
+                    <span class="category-badge" :class="'category-' + m.damage_class" x-show="m.damage_class" x-text="capitalize(m.damage_class)"></span>
+                    <span x-show="!m.damage_class" class="text-dim">—</span>
+                  </td>
+                  <td class="col-desc" x-text="m.description || '—'"></td>
+                  <td class="col-stat" x-text="m.learners"></td>
+                  <td class="col-gen" x-text="m.gen"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <div class="no-results" x-show="filteredMoves.length === 0 && moves.length > 0">
+            No moves match your filters.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div x-show="activeTab === 'abilities'">
+      <div x-show="showDetailView == 'ability'">
+        <div class="detail-page">
+          <button class="detail-back" @click="closeDetail()">← Back to list</button>
+          <div class="detail-layout">
+            <div class="detail-header">
+              <div class="detail-info">
+                <h2 class="detail-name" x-text="capitalize(detailItem.name)"></h2>
+                <div class="detail-meta">
+                  <div><strong>Generation:</strong> <span x-text="detailItem.generation || '—'"></span></div>
+                  <div><strong>Pokémon with this ability:</strong> <span x-text="detailItem.pokemon.length"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-section">
+              <h3>Description</h3>
+              <p class="detail-desc" x-text="detailItem.description || 'No description available.'"></p>
+            </div>
+            <div class="detail-section">
+              <h3>Pokémon</h3>
+              <input type="text" class="search-input" placeholder="Search Pokémon..." x-model="detailAbilitySearch">
+              <div class="detail-move-list">
+                <template x-for="p in detailItem.pokemon.filter(p => !detailAbilitySearch || p.includes(detailAbilitySearch.toLowerCase()))" :key="p">
+                  <span class="detail-move-chip" @dblclick="openPokemonFromDetail(p)" x-text="capitalize(p)"></span>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div x-show="showDetailView != 'ability'">
+        <div class="controls">
+          <input type="text" class="search-input" placeholder="Search abilities..." x-model="abilitySearch" @input="abilityRecompute()">
+
+          <div class="chip-bar">
+            <div class="add-chip-wrapper">
+              <button class="chip chip-add" @click="abilityShowAddMenu = !abilityShowAddMenu">+ Add Filter</button>
+              <div class="add-chip-menu" x-show="abilityShowAddMenu" @click.outside="abilityShowAddMenu = false">
+                <button @click="addAbilityChip('generation'); abilityShowAddMenu = false">Generation</button>
+                <button @click="addAbilityChip('pokemon'); abilityShowAddMenu = false">Pokémon</button>
+              </div>
+            </div>
+
+            <template x-for="(chip, i) in abilityChips" :key="i">
+              <div class="chip" :class="'chip-' + chip.type" @click.stop>
+                <template x-if="!chip.editing">
+                  <span class="chip-text" @click="chip.editing = true" x-text="abilityChipLabel(chip)"></span>
+                </template>
+                <template x-if="chip.editing">
+                  <div class="chip-edit">
+                    <template x-if="chip.type === 'generation'">
+                      <select x-model="chip.value" @change="commitAbilityChip(chip)">
+                        <option value="1">Gen 1</option>
+                        <option value="2">Gen 2</option>
+                        <option value="3">Gen 3</option>
+                        <option value="4">Gen 4</option>
+                        <option value="5">Gen 5</option>
+                        <option value="6">Gen 6</option>
+                        <option value="7">Gen 7</option>
+                        <option value="8">Gen 8</option>
+                        <option value="9">Gen 9</option>
+                      </select>
+                    </template>
+                    <template x-if="chip.type === 'pokemon'">
+                      <input type="text" x-model="chip.value" placeholder="Pokémon name..." @keyup.enter="commitAbilityChip(chip)">
+                    </template>
+                    <button class="chip-commit" @click="commitAbilityChip(chip)">✓</button>
+                  </div>
+                </template>
+                <button class="chip-remove" @click="removeAbilityChip(i)">&times;</button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="poke-table">
+            <thead>
+              <tr>
+                <template x-for="col in abilityColumns" :key="col.key">
+                  <th :class="{ sortable: col.sortable, sorted: abilitySortKey === col.key }" @click="col.sortable && toggleAbilitySort(col.key)">
+                    <span x-text="col.label"></span>
+                    <span class="sort-arrow" x-show="abilitySortKey === col.key" x-text="abilitySortDir === 'asc' ? '▲' : '▼'"></span>
+                  </th>
+                </template>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="a in filteredAbilities" :key="a.name">
+                <tr @dblclick="openAbilityDetail(a)">
+                  <td class="col-name" x-text="capitalize(a.name)"></td>
+                  <td class="col-desc" x-text="a.description || '—'"></td>
+                  <td class="col-stat" x-text="a.pokemon.length"></td>
+                  <td class="col-gen" x-text="a.generation || '—'"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <div class="no-results" x-show="filteredAbilities.length === 0 && abilities.length > 0">
+            No abilities match your filters.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div x-show="activeTab === 'wallpaper'">
+      <div class="wp-page">
+        <div class="wp-header">
+          <h2 class="wp-title">Wallpaper Generator</h2>
+          <div class="wp-controls">
+            <div class="autocomplete-wrapper">
+               <input type="text" class="search-input wp-search" placeholder="Search Pokémon..." x-model="wpSearch"
+                     @input="wpFilterSuggestions(); wpShowDropdown = true"
+                     @focus="wpShowDropdown = wpSearch.trim().length > 0 && wpFiltered.length > 0"
+                     @keydown.escape="wpShowDropdown = false" @keyup.enter="wpSelectFirst()">
+              <div class="autocomplete-dropdown" x-show="wpShowDropdown && wpFiltered.length"
+                   @click.outside="wpShowDropdown = false">
+                <template x-for="s in wpFiltered" :key="s.id">
+                  <div class="autocomplete-item" @click="wpSelectPokemon(s)" x-text="'#' + s.id + ' ' + capitalize(s.name)"></div>
+                </template>
+              </div>
+            </div>
+            <button class="btn btn-tb" @click="wpGenerate()" :disabled="!wpPokemon">Generate</button>
+            <button class="btn btn-tb" @click="wpDownload()" x-show="wpDataUrl">Download PNG</button>
+          </div>
+        </div>
+        <div class="wp-preview" x-show="wpDataUrl">
+          <img :src="wpDataUrl" alt="Wallpaper preview" class="wp-image">
+        </div>
+        <div class="wp-empty" x-show="!wpDataUrl && !wpPokemon">
+          <p>Search for a Pokémon and click Generate to create a wallpaper.</p>
+        </div>
+        <div class="wp-empty" x-show="!wpDataUrl && wpPokemon">
+          <p>Click Generate to create a wallpaper for <strong x-text="capitalize(wpPokemon.name)"></strong>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div x-show="activeTab === 'speedrun'">
+      <div class="sr-page">
+        <div class="sr-header">
+          <h2 class="sr-title">Speedrun</h2>
+          <button class="btn btn-tb" @click="srNew()" x-text="(srCountdown || srActive) ? 'New Run' : 'Start Run'"></button>
+        </div>
+
+        <div class="sr-body">
+          <div class="sr-main">
+
+        <template x-if="!srStart && !srComplete">
+          <div class="sr-empty">
+            <div class="sr-settings">
+              <div class="sr-setting-row">
+                <span class="sr-setting-label">From</span>
+                <div class="sr-type-group">
+                  <button class="sr-type-btn" :class="{ active: srStartTypes.includes('pokemon') }" @click="srStartTypes = srStartTypes.includes('pokemon') ? srStartTypes.filter(t => t !== 'pokemon') : [...srStartTypes, 'pokemon']">Pokémon</button>
+                  <button class="sr-type-btn" :class="{ active: srStartTypes.includes('move') }" @click="srStartTypes = srStartTypes.includes('move') ? srStartTypes.filter(t => t !== 'move') : [...srStartTypes, 'move']">Move</button>
+                  <button class="sr-type-btn" :class="{ active: srStartTypes.includes('ability') }" @click="srStartTypes = srStartTypes.includes('ability') ? srStartTypes.filter(t => t !== 'ability') : [...srStartTypes, 'ability']">Ability</button>
+                </div>
+              </div>
+              <div class="sr-setting-row">
+                <span class="sr-setting-label">To</span>
+                <div class="sr-type-group">
+                  <button class="sr-type-btn" :class="{ active: srTargetTypes.includes('pokemon') }" @click="srTargetTypes = srTargetTypes.includes('pokemon') ? srTargetTypes.filter(t => t !== 'pokemon') : [...srTargetTypes, 'pokemon']">Pokémon</button>
+                  <button class="sr-type-btn" :class="{ active: srTargetTypes.includes('move') }" @click="srTargetTypes = srTargetTypes.includes('move') ? srTargetTypes.filter(t => t !== 'move') : [...srTargetTypes, 'move']">Move</button>
+                  <button class="sr-type-btn" :class="{ active: srTargetTypes.includes('ability') }" @click="srTargetTypes = srTargetTypes.includes('ability') ? srTargetTypes.filter(t => t !== 'ability') : [...srTargetTypes, 'ability']">Ability</button>
+                </div>
+              </div>
+              <div class="sr-tip">Recommended to set target to not a pokémon</div>
+            </div>
+            <div class="sr-custom">
+              <div class="sr-custom-row">
+                <span class="sr-setting-label">From</span>
+                <div class="sr-custom-search">
+                  <input type="text" class="search-input" placeholder="Search specific…" x-model="srStartSearch"
+                         @input="srPickCustom('start')" @blur="setTimeout(() => srStartResults = [], 200)">
+                  <button class="sr-clear-btn" @click="srClearCustom('start')" x-show="srCustomStart">×</button>
+                  <div class="autocomplete-dropdown" x-show="srStartResults.length">
+                    <template x-for="e in srStartResults" :key="e.type + e.name">
+                      <div class="autocomplete-item" @mousedown="srSelectCustom('start', e)">
+                        <span x-text="`#${e.id} ${e.name.replace(/-/g, ' ')}`"></span>
+                        <span class="sr-result-type" x-text="e.type"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+              <div class="sr-custom-row">
+                <span class="sr-setting-label">To</span>
+                <div class="sr-custom-search">
+                  <input type="text" class="search-input" placeholder="Search specific…" x-model="srTargetSearch"
+                         @input="srPickCustom('target')" @blur="setTimeout(() => srTargetResults = [], 200)">
+                  <button class="sr-clear-btn" @click="srClearCustom('target')" x-show="srCustomTarget">×</button>
+                  <div class="autocomplete-dropdown" x-show="srTargetResults.length">
+                    <template x-for="e in srTargetResults" :key="e.type + e.name">
+                      <div class="autocomplete-item" @mousedown="srSelectCustom('target', e)">
+                        <span x-text="`#${e.id} ${e.name.replace(/-/g, ' ')}`"></span>
+                        <span class="sr-result-type" x-text="e.type"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p>Navigate to the target in as few clicks as possible.</p>
+            <p>Click <strong>Start Run</strong> to begin.</p>
+            <p x-show="srForfeitMsg" class="sr-forfeit-msg" x-text="srForfeitMsg"></p>
           </div>
         </template>
-      </div>
-    </div>
 
-    <div class="table-wrapper">
-      <table class="poke-table">
-        <thead>
-          <tr>
-            <template x-for="col in moveColumns" :key="col.key">
-              <th :class="{ sortable: col.sortable, sorted: moveSortKey === col.key }" @click="col.sortable && toggleMoveSort(col.key)">
-                <span x-text="col.label"></span>
-                <span class="sort-arrow" x-show="moveSortKey === col.key" x-text="moveSortDir === 'asc' ? '▲' : '▼'"></span>
-              </th>
-            </template>
-          </tr>
-        </thead>
-        <tbody>
-          <template x-for="m in filteredMoves" :key="m.name">
-            <tr @dblclick="openMoveDetail(m)">
-              <td class="col-name" x-text="capitalize(m.name)"></td>
-              <td class="col-types">
-                <span class="type-badge" :class="'type-' + m.type" x-show="m.type" x-text="capitalize(m.type)"></span>
-                <span x-show="!m.type" class="text-dim">—</span>
-              </td>
-              <td class="col-stat" x-text="m.power != null ? m.power : '—'"></td>
-              <td class="col-stat" x-text="m.accuracy != null ? m.accuracy : '—'"></td>
-              <td class="col-stat" x-text="m.pp != null ? m.pp : '—'"></td>
-              <td>
-                <span class="category-badge" :class="'category-' + m.damage_class" x-show="m.damage_class" x-text="capitalize(m.damage_class)"></span>
-                <span x-show="!m.damage_class" class="text-dim">—</span>
-              </td>
-              <td class="col-desc" x-text="m.description || '—'"></td>
-              <td class="col-stat" x-text="m.learners"></td>
-              <td class="col-gen" x-text="m.gen"></td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
-      <div class="no-results" x-show="filteredMoves.length === 0 && moves.length > 0">
-        No moves match your filters.
-      </div>
-    </div>
-    </div>
+        <template x-if="srStart || srComplete">
+          <div class="sr-run">
+            <div class="sr-targets">
+              <div class="sr-card">
+                <span class="sr-card-label">Start</span>
+                <span class="sr-card-type" x-text="srLabelType(srStart.type)"></span>
+                <span class="sr-card-name" x-text="srLabel(srStart)"></span>
+              </div>
+              <div class="sr-arrow">→</div>
+              <div class="sr-card" :class="{ 'sr-card-done': srComplete }">
+                <span class="sr-card-label">Target</span>
+                <span class="sr-card-type" x-text="srLabelType(srTarget.type)"></span>
+                <span class="sr-card-name" x-text="srLabel(srTarget)"></span>
+              </div>
+            </div>
 
-    <template x-if="showDetailView === 'move'">
-  <div class="detail-page">
-    <button class="detail-back" @click="closeDetail()">← Back to list</button>
-    <div class="detail-layout">
-      <div class="detail-header">
-        <div class="detail-info">
-          <h2 class="detail-name" x-text="capitalize(detailItem.name)"></h2>
-          <div class="detail-types">
-            <span class="type-badge" :class="'type-' + detailItem.type" x-text="capitalize(detailItem.type)"></span>
-            <span class="category-badge" :class="'category-' + detailItem.damage_class" x-text="capitalize(detailItem.damage_class)"></span>
+            <div x-show="srActive || srComplete" class="sr-stats">
+              <div class="sr-stat">
+                <span class="sr-stat-value" x-text="srClicks"></span>
+                <span class="sr-stat-label">Clicks</span>
+              </div>
+              <div class="sr-stat">
+                <span class="sr-stat-value" x-text="srFormat(srElapsed)"></span>
+                <span class="sr-stat-label">Time</span>
+              </div>
+            </div>
+
+            <div x-show="srComplete" class="sr-complete">
+              <p>You reached the target in <strong x-text="srClicks"></strong> click<span x-show="srClicks !== 1">s</span> and <strong x-text="srFormat(srElapsed)"></strong>!</p>
+            </div>
+          </div>
+        </template>
+
+          </div>
+
+          <div class="sr-history" x-show="srHistory.length">
+            <h3 class="sr-history-title">History</h3>
+            <div class="sr-history-list">
+              <template x-for="(h, i) in srHistory" :key="i">
+                <div class="sr-history-entry">
+                  <div class="sr-history-headers">
+                    <span class="sr-history-from" x-text="srLabel(h.start)"></span>
+                    <span class="sr-history-arrow">→</span>
+                    <span class="sr-history-to" x-text="srLabel(h.target)"></span>
+                  </div>
+                  <div class="sr-history-meta">
+                    <span x-text="h.clicks + ' click' + (h.clicks !== 1 ? 's' : '')"></span>
+                    <span x-text="srFormat(h.elapsed)"></span>
+                    <span class="sr-history-mode" x-text="h.mode"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
       </div>
-      <div class="detail-stats-row">
-        <div class="detail-stat-box">
-          <span class="detail-stat-label">Power</span>
-          <span class="detail-stat-value" x-text="detailItem.power != null ? detailItem.power : '—'"></span>
+    </div>
+
+    <div x-show="activeTab === 'teambuilder'">
+      <div class="tb-page">
+        <div class="tb-header">
+          <button class="detail-back" @click="activeTab = 'home'">← Close</button>
+          <div class="tb-team-tabs">
+            <template x-for="(t, i) in savedTeams" :key="i">
+              <button class="tb-team-tab" :class="{ active: activeTeamIndex === i }" @click="selectTeam(i)" x-text="i + 1"></button>
+            </template>
+          </div>
+          <div class="tb-header-actions">
+            <button class="btn btn-tb" @click="showImportTextarea = !showImportTextarea">Import</button>
+            <button class="btn btn-tb" @click="exportShowdown()">Export</button>
+          </div>
         </div>
-        <div class="detail-stat-box">
-          <span class="detail-stat-label">Accuracy</span>
-          <span class="detail-stat-value" x-text="detailItem.accuracy != null ? detailItem.accuracy + '%' : '—'"></span>
-        </div>
-        <div class="detail-stat-box">
-          <span class="detail-stat-label">PP</span>
-          <span class="detail-stat-value" x-text="detailItem.pp != null ? detailItem.pp : '—'"></span>
-        </div>
-        <div class="detail-stat-box">
-          <span class="detail-stat-label">Gen</span>
-          <span class="detail-stat-value" x-text="detailItem.gen"></span>
-        </div>
-      </div>
-      <div class="detail-section">
-        <h3>Description</h3>
-        <p class="detail-desc" x-text="detailItem.description || 'No description available.'"></p>
-      </div>
-      <div class="detail-section">
-        <h3>Learned By</h3>
-        <input type="text" class="search-input" placeholder="Search Pokémon..." x-model="detailMoveSearch">
-        <div class="detail-move-list">
-          <template x-for="p in detailItem.pokemon.filter(p => !detailMoveSearch || p.includes(detailMoveSearch.toLowerCase()))" :key="p">
-            <span class="detail-move-chip" x-text="capitalize(p)"></span>
+
+        <div class="tb-team-header">
+          <template x-if="editingTeamNameIndex !== activeTeamIndex">
+            <h3 class="tb-team-name" @dblclick="startEditTeamName()" x-text="savedTeams[activeTeamIndex].name"></h3>
+          </template>
+          <template x-if="editingTeamNameIndex === activeTeamIndex">
+            <input type="text" class="tb-team-name-input" :value="savedTeams[activeTeamIndex].name"
+                   @keyup.enter="renameTeam(activeTeamIndex, $event.target.value)"
+                   @keyup.escape="editingTeamNameIndex = null"
+                   @blur="renameTeam(activeTeamIndex, $event.target.value)"
+                   x-init="$el.focus(); $el.select()">
           </template>
         </div>
+
+        <div class="tb-import-area" x-show="showImportTextarea">
+          <textarea class="tb-import-textarea" x-model="importText" placeholder="Paste Showdown team here..."></textarea>
+          <button class="btn btn-tb" @click="importShowdown(importText); showImportTextarea = false">Import</button>
+          <button class="btn btn-tb-cancel" @click="showImportTextarea = false; importText = ''">Cancel</button>
+        </div>
+
+        <div class="tb-layout">
+          <div class="tb-left">
+            <div class="tb-slots">
+              <template x-for="(slot, i) in team" :key="i">
+                <div class="tb-slot" :class="{ 'tb-slot-empty': !slot.pokemon, 'tb-slot-selected': selectedSlot === i }"
+                     @click="selectSlot(i)">
+                  <template x-if="slot.pokemon">
+                    <div class="tb-slot-body">
+                      <img :src="spriteUrl(slot.pokemon.id)" :alt="slot.pokemon.name" width="48" height="48"
+                           @error="onSpriteError($event, slot.pokemon.id)">
+                      <div class="tb-slot-name" x-text="capitalize(slot.pokemon.name)"></div>
+                      <div class="tb-slot-types">
+                        <template x-for="t in slot.pokemon.types" :key="t">
+                          <span class="type-badge tb-type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                  <template x-if="!slot.pokemon">
+                    <div class="tb-slot-empty-body" @click.stop="selectSlot(i); openTeamPokemonSearch()">
+                      <span class="tb-plus">+</span>
+                      <span class="tb-slot-label">Slot <span x-text="i + 1"></span></span>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+
+            <div class="tb-editor" x-show="team[selectedSlot]">
+              <template x-if="!team[selectedSlot].pokemon">
+                <div class="tb-editor-empty" @click="openTeamPokemonSearch()">
+                  <span class="tb-plus" style="font-size:2rem">+</span>
+                  <span>Click to add a Pokémon</span>
+                </div>
+              </template>
+              <template x-if="team[selectedSlot].pokemon">
+                <div>
+                  <div class="tb-editor-header">
+                    <img :src="spriteUrl(team[selectedSlot].pokemon.id)" :alt="team[selectedSlot].pokemon.name"
+                         width="80" height="80" @error="onSpriteError($event, team[selectedSlot].pokemon.id)">
+                    <div class="tb-editor-info">
+                      <div class="tb-editor-name" x-text="capitalize(team[selectedSlot].pokemon.name)"></div>
+                      <div class="tb-editor-types">
+                        <template x-for="t in team[selectedSlot].pokemon.types" :key="t">
+                          <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                        </template>
+                      </div>
+                      <button class="btn btn-remove" @click="removeTeamPokemon(selectedSlot)">Remove</button>
+                    </div>
+                  </div>
+
+                  <div class="tb-form-grid">
+                    <div class="tb-field">
+                      <label class="tb-label">Ability</label>
+                      <select class="tb-select" x-model="team[selectedSlot].ability">
+                        <option value="">None</option>
+                        <template x-for="a in (team[selectedSlot].pokemon.abilities || [])" :key="a">
+                          <option :value="a" x-text="capitalize(a)"></option>
+                        </template>
+                      </select>
+                    </div>
+                    <div class="tb-field">
+                      <label class="tb-label">Item</label>
+                      <div class="autocomplete-wrapper">
+                        <input type="text" class="tb-input" :value="team[selectedSlot].item" placeholder="e.g. Leftovers"
+                               @input="team[selectedSlot].item = $event.target.value; itemShowDropdown = true; itemFiltered = allItems.filter(i => i.toLowerCase().includes($event.target.value.toLowerCase()))"
+                               @focus="itemShowDropdown = true; itemFiltered = allItems"
+                               @keydown.escape="itemShowDropdown = false">
+                        <div class="autocomplete-dropdown" x-show="itemShowDropdown && itemFiltered.length"
+                             @click.outside="itemShowDropdown = false">
+                          <div class="autocomplete-item" @click="team[selectedSlot].item = ''; itemShowDropdown = false">(none)</div>
+                          <template x-for="item in itemFiltered" :key="item">
+                            <div class="autocomplete-item" @click="team[selectedSlot].item = item; itemShowDropdown = false"
+                                 x-text="item"></div>
+                          </template>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tb-field">
+                      <label class="tb-label">Nature</label>
+                      <select class="tb-select" x-model="team[selectedSlot].nature">
+                        <template x-for="n in natures" :key="n">
+                          <option :value="n" x-text="n"></option>
+                        </template>
+                      </select>
+                    </div>
+                    <div class="tb-field">
+                      <label class="tb-label">Tera Type</label>
+                      <select class="tb-select" x-model="team[selectedSlot].teraType">
+                        <template x-for="t in allTypes" :key="t">
+                          <option :value="t" x-text="capitalize(t)"></option>
+                        </template>
+                      </select>
+                    </div>
+                    <div class="tb-field">
+                      <label class="tb-label">Level</label>
+                      <input type="number" class="tb-input tb-input-narrow" x-model="team[selectedSlot].level" min="1" max="100">
+                    </div>
+                  </div>
+
+                  <div class="tb-section">
+                    <h4 class="tb-subheading">EVs <span class="tb-ev-total" x-text="'(' + evTotal(team[selectedSlot]) + ' / 510)'"></span></h4>
+                    <div class="tb-ev-grid">
+                      <template x-for="stat in ['hp','atk','def','spa','spd','spe']" :key="stat">
+                        <div class="tb-ev-row">
+                          <span class="tb-ev-label" x-text="statLabel(stat)"></span>
+                          <input type="number" class="tb-input tb-ev-input" :value="team[selectedSlot].evs[stat] || 0"
+                                 min="0" max="252"
+                                 @input="updateEv(team[selectedSlot], stat, $event.target.value)">
+                          <input type="range" class="tb-ev-slider" :value="team[selectedSlot].evs[stat] || 0"
+                                 min="0" max="252"
+                                 @input="updateEv(team[selectedSlot], stat, $event.target.value)">
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div class="tb-section">
+                    <h4 class="tb-subheading">IVs</h4>
+                    <div class="tb-iv-grid">
+                      <template x-for="stat in ['hp','atk','def','spa','spd','spe']" :key="stat">
+                        <div class="tb-iv-cell">
+                          <span class="tb-iv-label" x-text="statLabel(stat)"></span>
+                          <input type="number" class="tb-input tb-iv-input" x-model="team[selectedSlot].ivs[stat]"
+                                 min="0" max="31">
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div class="tb-section">
+                    <h4 class="tb-subheading">Moves</h4>
+                    <div class="tb-moves">
+                      <template x-for="(_, mi) in [0,1,2,3]" :key="mi">
+                        <div class="tb-move-field">
+                          <span class="tb-move-num" x-text="mi + 1"></span>
+                          <select class="tb-select tb-move-select"
+                                  x-model="team[selectedSlot].moves[mi]">
+                            <option value="">—</option>
+                            <template x-for="m in (team[selectedSlot].pokemon.moves || [])" :key="m">
+                              <option :value="m" x-text="m.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></option>
+                            </template>
+                          </select>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="tb-right">
+            <div class="tb-panel">
+              <h3 class="tb-panel-title">Defensive</h3>
+              <div class="tb-type-grid">
+                <template x-for="t in allTypes" :key="t">
+                  <div class="tb-type-cell" :class="'tb-type-' + (teamDefenseAnalysis()[t].immune > 0 ? 'immune' : (teamDefenseAnalysis()[t].weak > 2 ? 'bad' : (teamDefenseAnalysis()[t].weak > 0 ? 'warn' : (teamDefenseAnalysis()[t].resist > 0 ? 'good' : 'neutral')))">
+                    <span class="tb-type-name" :class="'type-' + t" x-text="t.slice(0,3)"></span>
+                    <span class="tb-type-count" x-text="teamDefenseAnalysis()[t].weak || ''"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <div class="tb-panel">
+              <h3 class="tb-panel-title">Offensive</h3>
+              <div class="tb-offensive-list">
+                <template x-for="t in teamOffensiveCoverage()" :key="t">
+                  <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                </template>
+                <span x-show="!teamOffensiveCoverage().length" class="tb-empty-text">No coverage yet</span>
+              </div>
+            </div>
+
+            <div class="tb-panel">
+              <h3 class="tb-panel-title">Team Stats</h3>
+              <div class="tb-stats">
+                <div class="tb-stat-row">
+                  <span class="tb-stat-label">Members</span>
+                  <span class="tb-stat-value" x-text="team.filter(s => s.pokemon).length + ' / 6'"></span>
+                </div>
+                <div class="tb-stat-row">
+                  <span class="tb-stat-label">Avg BST</span>
+                  <span class="tb-stat-value" x-text="teamAvgBst()"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pokemon Search Modal -->
+        <div class="tb-modal-overlay" x-show="teamShowPokemonSearch" @click="closeTeamPokemonSearch()">
+          <div class="tb-modal" @click.stop>
+            <div class="tb-modal-header">
+              <h3>Add Pokémon</h3>
+              <button class="tb-modal-close" @click="closeTeamPokemonSearch()">&times;</button>
+            </div>
+            <input type="text" class="search-input tb-modal-search" placeholder="Search by name..."
+                   x-model="teamSearch" @input="teamRecompute()" @keyup.escape="closeTeamPokemonSearch()">
+            <div class="tb-modal-results">
+              <template x-for="p in teamSearchResults" :key="p.id">
+                <div class="tb-modal-result" @click="selectTeamPokemon(p)">
+                  <img :src="spriteUrl(p.id)" :alt="p.name" width="40" height="40"
+                       @error="onSpriteError($event, p.id)">
+                  <div class="tb-modal-result-info">
+                    <span class="tb-modal-result-name" x-text="capitalize(p.name)"></span>
+                    <div class="tb-modal-result-types">
+                      <template x-for="t in p.types" :key="t">
+                        <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <div class="tb-modal-empty" x-show="teamSearch && !teamSearchResults.length">
+                No Pokémon found
+              </div>
+            </div>
+          </div>
+        </div>
+
+
       </div>
     </div>
-  </div>
-</template>
 
     <footer class="footer">
       <span x-show="activeTab === 'pokemon'">Showing <strong x-text="filteredPokemon.length"></strong> of <strong x-text="pokemon.length"></strong> Pokémon</span>
       <span x-show="activeTab === 'moves'">Showing <strong x-text="filteredMoves.length"></strong> of <strong x-text="moves.length"></strong> Moves</span>
+      <span x-show="activeTab === 'abilities'">Showing <strong x-text="filteredAbilities.length"></strong> of <strong x-text="abilities.length"></strong> Abilities</span>
     </footer>
   </div>
   <script src="pokemon-data.js"></script>
   <script src="moves-data.js"></script>
+  <script src="abilities-data.js"></script>
+  <script src="evolution-data.js"></script>
+  <script src="facts-data.js"></script>
   <script src="app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+  <script src="alpine.min.js"></script>
 </body>
 </html>

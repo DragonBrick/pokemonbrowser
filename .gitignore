@@ -1,0 +1,6 @@
+.superpowers/
+docs/
+wallpapers/
+AGENTS.md
+*.json
+generate-*.js
