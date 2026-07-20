@@ -19,6 +19,7 @@
           <button :class="{ active: activeTab === 'teambuilder' }" @click="switchTab('teambuilder')" @dblclick="closeDetail()">Team Builder</button>
           <button :class="{ active: activeTab === 'wallpaper' }" @click="switchTab('wallpaper')" @dblclick="closeDetail()">Wallpaper</button>
           <button :class="{ active: activeTab === 'speedrun' }" @click="switchTab('speedrun')" @dblclick="closeDetail()" x-show="pokemon.length">Speedrun</button>
+          <button :class="{ active: activeTab === 'games' }" @click="switchTab('games')" @dblclick="closeDetail()" x-show="pokemon.length">Games</button>
         </nav>
       </div>
       <div class="header-actions">
@@ -1085,10 +1086,140 @@
       </div>
     </div>
 
+    <div x-show="activeTab === 'games'">
+      <div class="gm-page">
+        <div class="gm-chooser">
+          <div class="gm-chooser-row">
+            <span class="gm-chooser-label">Game</span>
+            <div class="gm-chooser-btns">
+              <button class="gm-chooser-btn" :class="{ active: gmGame === 'whosthat' }" @click="gmStartGame('whosthat', gmMode)">Who's That Pokémon</button>
+              <button class="gm-chooser-btn" :class="{ active: gmGame === 'pokedle' }" @click="gmStartGame('pokedle', gmMode)">Pokedle</button>
+            </div>
+          </div>
+          <div class="gm-chooser-row">
+            <span class="gm-chooser-label">Mode</span>
+            <div class="gm-chooser-btns">
+              <button class="gm-chooser-btn" :class="{ active: gmMode === 'daily' }" @click="gmStartGame(gmGame, 'daily')">Daily</button>
+              <button class="gm-chooser-btn" :class="{ active: gmMode === 'endless' }" @click="gmStartGame(gmGame, 'endless')">Endless</button>
+              <button class="gm-chooser-btn gm-chooser-new" @click="gmStartGame(gmGame, gmMode)">New Game</button>
+            </div>
+          </div>
+        </div>
+
+        <div x-show="!gmPokemon" class="gm-empty">
+          <p>Select a game and click New Game to start!</p>
+        </div>
+
+        <div x-show="gmPokemon && gmGame === 'whosthat'" class="gm-wtp">
+          <div class="gm-wtp-image-wrap">
+            <img :src="'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' + gmPokemon.id + '.png'"
+                 :class="{ 'gm-silhouette': !gmRevealed }" class="gm-wtp-image">
+          </div>
+
+          <div x-show="!gmRevealed" class="gm-wtp-controls">
+            <div class="gm-wtp-search">
+              <input type="text" class="search-input" placeholder="Type Pokémon name..." x-model="gmWtpSearch"
+                     @input="gmWtpSearchInput()" @keydown.enter="gmWtpGuess(gmWtpSearch)">
+              <div class="autocomplete-dropdown" x-show="gmWtpFiltered.length">
+                <template x-for="p in gmWtpFiltered" :key="p.id">
+                  <div class="autocomplete-item" @mousedown="gmWtpSearch = capitalize(p.name.replace(/-/g, ' ')); gmWtpFiltered = []; gmWtpGuess(p.name)">
+                    <img :src="spriteUrl(p.id)" class="autocomplete-sprite">
+                    <span x-text="'#' + p.id + ' ' + capitalize(p.name.replace(/-/g, ' '))"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+            <button class="btn btn-sm" @click="gmWtpGuess(gmWtpSearch)">Guess</button>
+          </div>
+
+          <div x-show="gmRevealed" class="gm-wtp-result">
+            <p class="gm-result-msg" x-text="gmMessage"></p>
+            <p class="gm-result-name" x-text="'#' + gmPokemon.id + ' ' + capitalize(gmPokemon.name.replace(/-/g, ' '))"></p>
+            <p>Score: <strong x-text="gmScore"></strong></p>
+          </div>
+
+          <p class="gm-attempts" x-show="!gmRevealed">Attempts: <strong x-text="gmAttempts"></strong> / 6</p>
+        </div>
+
+        <div x-show="gmPokemon && gmGame === 'pokedle'" class="gm-pokedle">
+          <div x-show="!gmRevealed" class="gm-pokedle-controls">
+            <div class="gm-pokedle-search">
+              <input type="text" class="search-input" placeholder="Type Pokémon name..." x-model="gmPokedleSearch"
+                     @input="gmPokedleSearchInput()" @keydown.enter="gmPokedleGuess(gmPokedleSearch)">
+              <div class="autocomplete-dropdown" x-show="gmPokedleFiltered.length">
+                <template x-for="p in gmPokedleFiltered" :key="p.id">
+                  <div class="autocomplete-item" @mousedown="gmPokedleSearch = capitalize(p.name.replace(/-/g, ' ')); gmPokedleFiltered = []; gmPokedleGuess(p.name)">
+                    <img :src="spriteUrl(p.id)" class="autocomplete-sprite">
+                    <span x-text="'#' + p.id + ' ' + capitalize(p.name.replace(/-/g, ' '))"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+            <button class="btn btn-sm" @click="gmPokedleGuess(gmPokedleSearch)">Guess</button>
+          </div>
+
+          <div class="gm-pokedle-grid" x-show="gmGuesses.length">
+            <div class="gm-grid-header">
+              <span class="gm-cell gm-cell-pkmn">Pokémon</span>
+              <span class="gm-cell gm-cell-type">Type 1</span>
+              <span class="gm-cell gm-cell-type">Type 2</span>
+              <span class="gm-cell gm-cell-gen">Gen</span>
+              <span class="gm-cell gm-cell-hw">Height</span>
+              <span class="gm-cell gm-cell-hw">Weight</span>
+            </div>
+            <template x-for="g in gmGuesses" :key="g.id + g.name">
+              <div class="gm-grid-row">
+                <span class="gm-cell gm-cell-pkmn">
+                  <img :src="spriteUrl(g.id)" class="autocomplete-sprite">
+                  <span x-text="capitalize(g.name.replace(/-/g, ' '))"></span>
+                </span>
+                <span class="gm-cell gm-cell-type" :class="g.matchType1 ? 'gm-correct' : 'gm-wrong'">
+                  <span x-text="capitalize(g.type1)"></span>
+                  <span x-text="g.matchType1 ? '✓' : '✗'"></span>
+                </span>
+                <span class="gm-cell gm-cell-type" :class="g.type2 ? (g.matchType2 ? 'gm-correct' : 'gm-wrong') : ''">
+                  <template x-if="g.type2">
+                    <span><span x-text="capitalize(g.type2)"></span> <span x-text="g.matchType2 ? '✓' : '✗'"></span></span>
+                  </template>
+                  <template x-if="!g.type2">
+                    <span>—</span>
+                  </template>
+                </span>
+                <span class="gm-cell gm-cell-gen" :class="g.matchGen ? 'gm-correct' : 'gm-wrong'">
+                  <span x-text="g.gen"></span>
+                  <span x-show="g.genDir === 'up'" class="gm-arrow gm-arrow-up">↑</span>
+                  <span x-show="g.genDir === 'down'" class="gm-arrow gm-arrow-down">↓</span>
+                </span>
+                <span class="gm-cell gm-cell-hw" :class="g.matchHeight ? 'gm-correct' : 'gm-wrong'">
+                  <span x-text="(g.height * 10) + 'cm'"></span>
+                  <span x-show="g.heightDir === 'up'" class="gm-arrow gm-arrow-up">↑ +<span x-text="g.heightDiff"></span>cm</span>
+                  <span x-show="g.heightDir === 'down'" class="gm-arrow gm-arrow-down">↓ -<span x-text="g.heightDiff"></span>cm</span>
+                </span>
+                <span class="gm-cell gm-cell-hw" :class="g.matchWeight ? 'gm-correct' : 'gm-wrong'">
+                  <span x-text="g.weight / 10 + 'kg'"></span>
+                  <span x-show="g.weightDir === 'up'" class="gm-arrow gm-arrow-up">↑ +<span x-text="g.weightDiff"></span>kg</span>
+                  <span x-show="g.weightDir === 'down'" class="gm-arrow gm-arrow-down">↓ -<span x-text="g.weightDiff"></span>kg</span>
+                </span>
+              </div>
+            </template>
+          </div>
+
+          <p class="gm-attempts" x-show="!gmRevealed">Guesses: <strong x-text="gmGuesses.length"></strong> / <strong x-text="gmMaxGuesses"></strong></p>
+
+          <div x-show="gmRevealed" class="gm-pokedle-result">
+            <p class="gm-result-msg" x-text="gmMessage"></p>
+          </div>
+        </div>
+
+        <div class="gm-message" x-show="gmMessage && !gmRevealed" x-text="gmMessage"></div>
+      </div>
+    </div>
+
     <footer class="footer">
       <span x-show="activeTab === 'pokemon'">Showing <strong x-text="filteredPokemon.length"></strong> of <strong x-text="pokemon.length"></strong> Pokémon</span>
       <span x-show="activeTab === 'moves'">Showing <strong x-text="filteredMoves.length"></strong> of <strong x-text="moves.length"></strong> Moves</span>
       <span x-show="activeTab === 'abilities'">Showing <strong x-text="filteredAbilities.length"></strong> of <strong x-text="abilities.length"></strong> Abilities</span>
+      <span x-show="activeTab === 'games'">Pokémon Games</span>
     </footer>
   </div>
   <script src="pokemon-data.js"></script>

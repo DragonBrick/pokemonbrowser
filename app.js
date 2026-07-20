@@ -22,7 +22,7 @@ document.addEventListener('alpine:init', () => {
     srCountdownTimer: null,
     srForfeitMsg: '',
     srStartTypes: ['pokemon'],
-    srTargetTypes: ['pokemon'],
+    srTargetTypes: ['move', 'ability'],
     showHowToUse: true,
     srCustomStart: null,
     srCustomTarget: null,
@@ -88,6 +88,22 @@ document.addEventListener('alpine:init', () => {
     wpShowDropdown: false,
     wpDataUrl: null,
     wpGenerating: false,
+
+    // === Games State ===
+    gmGame: 'whosthat',
+    gmMode: 'daily',
+    gmPokemon: null,
+    gmGuesses: [],
+    gmAttempts: 0,
+    gmRevealed: false,
+    gmMessage: '',
+    gmMaxGuesses: 8,
+    gmDailyDate: '',
+    gmWtpSearch: '',
+    gmWtpFiltered: [],
+    gmPokedleSearch: '',
+    gmPokedleFiltered: [],
+    gmScore: 0,
 
     moveColumns: [
       { key: 'name', label: 'Move', sortable: true },
@@ -166,6 +182,10 @@ document.addEventListener('alpine:init', () => {
         this.recentlyViewed = saved;
       } catch (e) {}
       try {
+        const saved = JSON.parse(localStorage.getItem('srHistory') || '[]');
+        this.srHistory = saved;
+      } catch (e) {}
+      try {
         const saved = JSON.parse(localStorage.getItem('savedTeams') || '[]');
         if (Array.isArray(saved) && saved.length > 0 && saved[0].slots) {
           this.savedTeams = saved;
@@ -200,8 +220,6 @@ document.addEventListener('alpine:init', () => {
         const q = this.search.toLowerCase();
         result = result.filter((p) => p.name.includes(q));
       }
-      result = result.filter((p) => !p.name.includes('-mega') && !p.name.includes('-gmax'));
-
       const groups = {};
       for (const chip of this.chips) {
         if (!groups[chip.type]) groups[chip.type] = [];
@@ -220,7 +238,7 @@ document.addEventListener('alpine:init', () => {
         } else if (type === 'move') {
           result = result.filter((p) => chips.some((c) => {
             const moveName = (c.value || '').toLowerCase().trim();
-            return moveName && p.moves.some((m) => m.includes(moveName));
+            return moveName && p.moves.some((m) => m.replace(/-/g, ' ').toLowerCase().startsWith(moveName));
           }));
         } else if (type === 'type') {
           result = result.filter((p) => chips.some((c) => {
@@ -350,7 +368,7 @@ document.addEventListener('alpine:init', () => {
       const q = (chip.value || '').toLowerCase().trim();
       let source = [];
       if (chip.type === 'move') {
-        source = this.moves.map(m => m.name).filter(n => n.includes(q)).slice(0, 20);
+        source = this.moves.map(m => m.name).filter(n => n.replace(/-/g, ' ').toLowerCase().startsWith(q)).slice(0, 20);
       } else if (chip.type === 'type') {
         source = this.allTypes.filter(t => t.includes(q));
       } else if (chip.type === 'category') {
@@ -417,7 +435,7 @@ document.addEventListener('alpine:init', () => {
       let result = [...this.moves];
       if (this.moveSearch) {
         const q = this.moveSearch.toLowerCase();
-        result = result.filter((m) => m.name.includes(q));
+        result = result.filter((m) => m.name.replace(/-/g, ' ').toLowerCase().startsWith(q));
       }
       const groups = {};
       for (const chip of this.moveChips) {
@@ -665,8 +683,8 @@ document.addEventListener('alpine:init', () => {
     srPick(types) {
       const pool = [];
       if (types.includes('pokemon')) { for (const p of this.pokemon) pool.push({ type: 'pokemon', id: p.id, name: p.name }); }
-      if (types.includes('move')) { for (const m of this.moves) pool.push({ type: 'move', id: m.id, name: m.name }); }
-      if (types.includes('ability')) { for (const a of this.abilities) pool.push({ type: 'ability', id: a.id, name: a.name }); }
+      if (types.includes('move')) { for (const m of this.moves) pool.push({ type: 'move', id: m.id || m.name, name: m.name }); }
+      if (types.includes('ability')) { for (const a of this.abilities) pool.push({ type: 'ability', id: a.id || a.name, name: a.name }); }
       return pool;
     },
 
@@ -679,12 +697,31 @@ document.addEventListener('alpine:init', () => {
         target = this.srCustomTarget;
       } else {
         const startPool = this.srPick(this.srStartTypes);
-        const targetPool = this.srPick(this.srTargetTypes);
-        if (!startPool.length || !targetPool.length) return;
-        do {
-          start = startPool[Math.floor(Math.random() * startPool.length)];
-          target = targetPool[Math.floor(Math.random() * targetPool.length)];
-        } while (start.type === target.type && start.name === target.name);
+        if (!startPool.length) return;
+        start = startPool[Math.floor(Math.random() * startPool.length)];
+        const candidates = [];
+        if (start.type === 'pokemon') {
+          const p = this.pokemon.find(x => x.id === start.id);
+          if (p) {
+            for (const mName of p.moves) {
+              const m = this.moves.find(x => x.name === mName);
+              if (m) candidates.push({ type: 'move', id: m.name, name: m.name });
+            }
+            for (const aName of p.abilities) {
+              const a = this.abilities.find(x => x.name === aName);
+              if (a) candidates.push({ type: 'ability', id: a.name, name: a.name });
+            }
+          }
+        }
+        if (candidates.length) {
+          target = candidates[Math.floor(Math.random() * candidates.length)];
+        } else {
+          const targetPool = this.srPick(this.srTargetTypes);
+          if (!targetPool.length) return;
+          do {
+            target = targetPool[Math.floor(Math.random() * targetPool.length)];
+          } while (start.type === target.type && start.name === target.name);
+        }
       }
       this.srStart = start;
       this.srTarget = target;
@@ -725,10 +762,10 @@ document.addEventListener('alpine:init', () => {
         const p = this.pokemon.find(x => x.id === entity.id);
         if (p) this.openPokemonFromDetail(p.name);
       } else if (entity.type === 'move') {
-        const m = this.moves.find(x => x.id === entity.id);
+        const m = this.moves.find(x => x.name === entity.name);
         if (m) this.openMoveFromDetail(m.name);
       } else if (entity.type === 'ability') {
-        const a = this.abilities.find(x => x.id === entity.id);
+        const a = this.abilities.find(x => x.name === entity.name);
         if (a) this.openAbilityFromDetail(a.name);
       }
     },
@@ -809,13 +846,14 @@ document.addEventListener('alpine:init', () => {
           this.srComplete = true;
           this.srElapsed = Date.now() - this.srStartTime;
           this.srHistory.unshift({
-            start: { ...this.srStart },
-            target: { ...this.srTarget },
+            start: { type: this.srStart.type, id: this.srStart.id, name: this.srStart.name },
+            target: { type: this.srTarget.type, id: this.srTarget.id, name: this.srTarget.name },
             clicks: this.srClicks,
             elapsed: this.srElapsed,
             mode: this.srCustomStart && this.srCustomTarget ? 'custom' : 'random',
           });
           if (this.srHistory.length > 50) this.srHistory.length = 50;
+          try { localStorage.setItem('srHistory', JSON.stringify(this.srHistory)); } catch (e) {}
           if (this.srTimer) clearInterval(this.srTimer);
           this.srTimer = null;
           this.activeTab = 'speedrun';
@@ -1148,13 +1186,134 @@ document.addEventListener('alpine:init', () => {
       try { localStorage.setItem('savedTeams', JSON.stringify(this.savedTeams)); } catch (e) {}
     },
 
+    // === Games Methods ===
+
+    gmDailySeed() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    },
+
+    gmPickPokemon(mode) {
+      const pool = this.pokemon.filter(p => !p.name.includes('-mega') && !p.name.includes('-gmax') && !p.name.includes('-totem'));
+      if (mode === 'daily') {
+        const seed = this.gmDailySeed();
+        let hash = 0;
+        for (let i = 0; i < seed.length; i++) { hash = ((hash << 5) - hash) + seed.charCodeAt(i); hash |= 0; }
+        return pool[Math.abs(hash) % pool.length];
+      } else {
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+    },
+
+    gmReset() {
+      this.gmGuesses = [];
+      this.gmAttempts = 0;
+      this.gmRevealed = false;
+      this.gmMessage = '';
+      this.gmWtpSearch = '';
+      this.gmWtpFiltered = [];
+      this.gmPokedleSearch = '';
+      this.gmPokedleFiltered = [];
+    },
+
+    gmStartGame(game, mode) {
+      this.gmGame = game;
+      this.gmMode = mode;
+      this.gmReset();
+      this.gmPokemon = this.gmPickPokemon(mode);
+      this.gmDailyDate = this.gmDailySeed();
+    },
+
+    gmWtpSearchInput() {
+      const q = this.gmWtpSearch.toLowerCase().trim();
+      if (!q) { this.gmWtpFiltered = []; return; }
+      this.gmWtpFiltered = this.pokemon
+        .filter(p => !p.name.includes('-mega') && !p.name.includes('-gmax') && !p.name.includes('-totem'))
+        .filter(p => p.name.replace(/-/g, ' ').toLowerCase().startsWith(q))
+        .slice(0, 8);
+    },
+
+    gmWtpGuess(name) {
+      if (this.gmRevealed) return;
+      const guess = name.toLowerCase().trim().replace(/\s+/g, '-');
+      if (guess === this.gmPokemon.name) {
+        this.gmRevealed = true;
+        this.gmAttempts++;
+        const pts = this.gmAttempts <= 1 ? 3 : this.gmAttempts <= 2 ? 2 : 1;
+        this.gmScore += pts;
+        this.gmMessage = "Correct! It's " + this.capitalize(this.gmPokemon.name.replace(/-/g, ' ')) + '! +' + pts + ' pts';
+        return;
+      }
+      this.gmAttempts++;
+      if (this.gmAttempts >= 6) {
+        this.gmRevealed = true;
+        this.gmMessage = 'Out of attempts! It was ' + this.capitalize(this.gmPokemon.name.replace(/-/g, ' ')) + '.';
+        return;
+      }
+      this.gmMessage = 'Wrong! Try again.';
+    },
+
+    gmPokedleSearchInput() {
+      const q = this.gmPokedleSearch.toLowerCase().trim();
+      if (!q) { this.gmPokedleFiltered = []; return; }
+      this.gmPokedleFiltered = this.pokemon
+        .filter(p => !p.name.includes('-mega') && !p.name.includes('-gmax') && !p.name.includes('-totem'))
+        .filter(p => p.name.replace(/-/g, ' ').toLowerCase().startsWith(q))
+        .slice(0, 10);
+    },
+
+    gmPokedleGuess(name) {
+      if (this.gmRevealed) return;
+      const guessName = name.toLowerCase().trim().replace(/\s+/g, '-');
+      if (this.gmGuesses.some(g => g.name === guessName)) {
+        this.gmMessage = 'You already guessed that!';
+        return;
+      }
+      const guessPkm = this.pokemon.find(p => p.name === guessName);
+      if (!guessPkm) {
+        this.gmMessage = 'Not a valid Pokémon!';
+        return;
+      }
+      const target = this.gmPokemon;
+      const result = {
+        name: guessName,
+        id: guessPkm.id,
+        type1: guessPkm.types[0],
+        type2: guessPkm.types[1] || null,
+        gen: guessPkm.generation,
+        height: guessPkm.height,
+        weight: guessPkm.weight,
+        matchType1: guessPkm.types[0] === target.types[0] || guessPkm.types[0] === (target.types[1] || ''),
+        matchType2: !!(guessPkm.types[1] && (guessPkm.types[1] === target.types[0] || guessPkm.types[1] === target.types[1])),
+        matchGen: guessPkm.generation === target.generation,
+        genDir: guessPkm.generation > target.generation ? 'down' : guessPkm.generation < target.generation ? 'up' : 'same',
+        matchHeight: guessPkm.height === target.height,
+        heightDir: guessPkm.height > target.height ? 'down' : guessPkm.height < target.height ? 'up' : 'same',
+        heightDiff: Math.abs(guessPkm.height - target.height) * 10,
+        matchWeight: guessPkm.weight === target.weight,
+        weightDir: guessPkm.weight > target.weight ? 'down' : guessPkm.weight < target.weight ? 'up' : 'same',
+        weightDiff: Math.abs(guessPkm.weight - target.weight) / 10,
+        correct: guessName === target.name,
+      };
+      this.gmGuesses.unshift(result);
+      if (result.correct) {
+        this.gmRevealed = true;
+        this.gmMessage = "Correct! It's " + this.capitalize(target.name.replace(/-/g, ' ')) + '!';
+        return;
+      }
+      if (this.gmGuesses.length >= this.gmMaxGuesses) {
+        this.gmRevealed = true;
+        this.gmMessage = 'Out of guesses! It was ' + this.capitalize(target.name.replace(/-/g, ' ')) + '.';
+      }
+    },
+
     // === Wallpaper Methods ===
 
     wpFilterSuggestions() {
       const q = this.wpSearch.toLowerCase().trim();
       if (!q) { this.wpFiltered = []; return; }
       this.wpFiltered = this.pokemon
-        .filter(p => p.name.includes(q) && !p.name.includes('-mega') && !p.name.includes('-gmax'))
+        .filter(p => p.name.includes(q))
         .slice(0, 15);
     },
 

@@ -38,7 +38,9 @@ async function main() {
   for (let i = 0; i < total; i++) {
     const entry = listRes.results[i];
     const id = parseInt(entry.url.split('/').filter(Boolean).pop());
-    if (entry.name.includes('-mega') || entry.name.includes('-gmax')) continue;
+    // Megas and Gmax forms now included
+
+
     try {
       console.log(`  [${i + 1}/${total}] ${entry.name}...`);
       const detail = await fetch(entry.url);
