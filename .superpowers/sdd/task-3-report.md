@@ -1,15 +1,24 @@
-# Task 3 Report: Detail View Templates
+# Task 3 Report: Collection State + Init + localStorage
 
-**Commit:** `1d8a5b2c312328c4b9e00f76027c25cf0ff116dc`
+## What I implemented
+- Added 18 collection state properties after the wallpaper state block in `app.js`
+- Added `this.collectionLoad()` call in the `async init()` method after factsData loading
+- Added 8 collection methods: `collectionGradedCount()`, `collectionTotalValue()`, `collectionFormatPrice()`, `variantLabel()`, `collectionRecompute()`, `collectionLoad()`, `collectionSave()`, `collectionFiltered()`
 
-## Changes Made
+## Files changed
+- `app.js` — 104 lines added across 3 locations
 
-1. **Pokémon table rows** — Added `@dblclick="openPokemonDetail(p)"` to `<tr>` in the Pokémon table.
-2. **Moves table rows** — Added `@dblclick="openMoveDetail(m)"` to `<tr>` in the Moves table.
-3. **Pokémon detail template** — Inserted `<template x-if="showDetailView === 'pokemon'">` block after the Pokémon tab content, containing sprite, info, base stats (with stat bars), and move list.
-4. **Move detail template** — Inserted `<template x-if="showDetailView === 'move'">` block after the Moves tab content, containing type/category badges, power/accuracy/PP/gen stats, description, and learned-by list.
+## Self-review findings
+- All properties and methods match the task brief exactly
+- `collectionLoad()` is called in `init()` after factsData load and before savedTeams load (correct order per brief)
+- Methods are placed after wallpaper methods and before `typeColor()`, consistent with existing code organization
+- Code style matches existing file conventions (no comments, consistent formatting)
 
-## Summary
+## Issues or concerns
+- The `collectionResults` state property is initialized but not used by any of the methods yet — it's presumably for future API search results
+- `collectionApiDebounce` is similarly unused — expected to be wired up with search functionality later
+- No concerns; the implementation is a straightforward scaffolding addition
 
-- `index.html` — 107 insertions, 2 deletions
-- All templates reference Alpine.js component state (`showDetailView`, `detailItem`, `detailPokemonSearch`, `detailMoveSearch`) and methods (`openPokemonDetail`, `openMoveDetail`, `closeDetail`, `spriteUrl`, `onSpriteError`, `capitalize`, `formatHeight`, `formatWeight`, `statLabel`, `statBarWidth`, `statTotal`) expected in the existing `pokemonBrowser` component.
+## Verification
+- `git diff` confirmed only `app.js` was modified with the expected 104 insertions
+- All state properties and methods are syntactically valid as part of the Alpine data object

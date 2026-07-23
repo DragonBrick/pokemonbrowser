@@ -1890,6 +1890,31 @@ document.addEventListener('alpine:init', () => {
       return result;
     },
 
+    collectionSearchCards() {
+      if (this.collectionApiDebounce) clearTimeout(this.collectionApiDebounce);
+      const q = (this.collectionSearchInput || '').trim();
+      if (q.length < 2) {
+        this.collectionResults = [];
+        this.collectionSearchError = null;
+        return;
+      }
+      this.collectionApiDebounce = setTimeout(async () => {
+        this.collectionApiLoading = true;
+        this.collectionSearchError = null;
+        try {
+          const resp = await fetch(`https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(q)}&pageSize=20`);
+          if (!resp.ok) throw new Error('API returned ' + resp.status);
+          const data = await resp.json();
+          this.collectionResults = data.data || [];
+        } catch (e) {
+          this.collectionSearchError = e.message;
+          this.collectionResults = [];
+        } finally {
+          this.collectionApiLoading = false;
+        }
+      }, 300);
+    },
+
     typeColor(type) {
       const colors = {
         normal: '#A8A878', fire: '#F08030', water: '#6890F0', electric: '#F8D030',
