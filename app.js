@@ -1915,6 +1915,85 @@ document.addEventListener('alpine:init', () => {
       }, 300);
     },
 
+    collectionOpenAdd(card) {
+      this.collectionModalMode = 'add';
+      this.collectionModalCard = card;
+      this.collectionModalEntryIndex = null;
+
+      const prices = card.tcgplayer && card.tcgplayer.prices ? card.tcgplayer.prices : {};
+      const variants = Object.keys(prices).map(key => ({
+        key,
+        label: this.variantLabel(key),
+        price: prices[key].market || prices[key].mid || 0
+      }));
+      this.collectionModalVariants = variants;
+      this.collectionModalVariant = variants.length > 0 ? variants[0].key : '';
+      this.collectionModalGrade = null;
+      this.collectionModalQuantity = 1;
+      this.collectionModalOpen = true;
+    },
+
+    get collectionModalVariantPrice() {
+      if (!this.collectionModalVariant || !this.collectionModalVariants.length) return null;
+      const v = this.collectionModalVariants.find(v => v.key === this.collectionModalVariant);
+      return v ? v.price : null;
+    },
+
+    collectionModalGradedPrice() {
+      const price = this.collectionModalVariantPrice;
+      if (price === null || price === 0) return 0;
+      if (this.collectionModalGrade && this.collectionPsaMultipliers[this.collectionModalGrade]) {
+        return price * this.collectionPsaMultipliers[this.collectionModalGrade];
+      }
+      return price;
+    },
+
+    collectionModalConfirm() {
+      if (!this.collectionModalVariant) return;
+      const card = this.collectionModalCard;
+      const variant = this.collectionModalVariants.find(v => v.key === this.collectionModalVariant);
+      const priceUngraded = variant ? variant.price : 0;
+
+      if (this.collectionModalMode === 'add') {
+        const entry = {
+          id: card.id,
+          name: card.name,
+          setName: card.set ? card.set.name : '',
+          setSeries: card.set ? card.set.series : '',
+          image: card.images ? card.images.small : '',
+          number: card.number || '',
+          variant: this.collectionModalVariant,
+          variantLabel: this.variantLabel(this.collectionModalVariant),
+          grade: this.collectionModalGrade,
+          quantity: this.collectionModalQuantity || 1,
+          priceUngraded: priceUngraded,
+          priceGraded: this.collectionModalGrade && this.collectionPsaMultipliers[this.collectionModalGrade]
+            ? priceUngraded * this.collectionPsaMultipliers[this.collectionModalGrade]
+            : null,
+          updatedAt: Date.now()
+        };
+        this.collection.unshift(entry);
+      } else {
+        const idx = this.collectionModalEntryIndex;
+        if (idx != null && this.collection[idx]) {
+          this.collection[idx].variant = this.collectionModalVariant;
+          this.collection[idx].variantLabel = this.variantLabel(this.collectionModalVariant);
+          this.collection[idx].grade = this.collectionModalGrade;
+          this.collection[idx].quantity = this.collectionModalQuantity || 1;
+          this.collection[idx].priceUngraded = priceUngraded;
+          this.collection[idx].priceGraded = this.collectionModalGrade && this.collectionPsaMultipliers[this.collectionModalGrade]
+            ? priceUngraded * this.collectionPsaMultipliers[this.collectionModalGrade]
+            : null;
+          this.collection[idx].updatedAt = Date.now();
+        }
+      }
+
+      this.collectionSave();
+      this.collectionModalOpen = false;
+      this.collectionSearchInput = '';
+      this.collectionResults = [];
+    },
+
     typeColor(type) {
       const colors = {
         normal: '#A8A878', fire: '#F08030', water: '#6890F0', electric: '#F8D030',
