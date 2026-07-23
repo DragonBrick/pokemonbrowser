@@ -1411,15 +1411,28 @@
   <div class="coll-controls">
     <div class="coll-search-row">
       <div class="autocomplete-wrapper coll-search-wrap">
-        <input type="text" class="search-input" placeholder="Search Pokémon TCG cards..." x-model="collectionSearchInput"
-               @input="collectionSearchCards()">
+        <input type="text" class="search-input" placeholder="Search Pokémon..." x-model="collectionSearchInput"
+               @input="collectionFilterPokemonSuggestions(); collectionShowPokemonDropdown = true"
+               @focus="collectionShowPokemonDropdown = collectionSearchInput.trim().length > 0 && collectionPokemonFiltered.length > 0"
+               @keydown.escape="collectionShowPokemonDropdown = false" @keyup.enter="collectionSearchCards()">
+        <div class="autocomplete-dropdown" x-show="collectionShowPokemonDropdown && collectionPokemonFiltered.length"
+             @click.outside="collectionShowPokemonDropdown = false">
+          <template x-for="s in collectionPokemonFiltered" :key="s.id">
+            <div class="autocomplete-item" @click="collectionSelectPokemon(s)" x-text="'#' + s.id + ' ' + capitalize(s.name)"></div>
+          </template>
+        </div>
       </div>
-      <select class="coll-sort" x-model="collectionSort" @change="collectionRecompute()">
+      <select class="coll-sort" x-model="collectionSort" @change="collectionRecompute()" x-show="collectionViewMode === 'collection'">
         <option value="date">Date Added</option>
         <option value="name">Name</option>
         <option value="set">Set</option>
         <option value="grade">Grade</option>
         <option value="value">Value</option>
+      </select>
+      <select class="coll-sort" x-model="collectionMainSort" x-show="collectionViewMode === 'main'">
+        <option value="price">Price (High)</option>
+        <option value="name">Name</option>
+        <option value="set">Set</option>
       </select>
     </div>
 
@@ -1433,15 +1446,57 @@
     </div>
   </div>
 
+  <!-- View Toggle (Main / Collection) -->
+  <div class="coll-view-toggle">
+    <button class="coll-toggle-btn" :class="{ active: collectionViewMode === 'main' }" @click="collectionSwitchView('main')">Main</button>
+    <button class="coll-toggle-btn" :class="{ active: collectionViewMode === 'collection' }" @click="collectionSwitchView('collection')">Collection</button>
+  </div>
+
+  <!-- Main view -->
+  <div x-show="collectionViewMode === 'main' && !(collectionSearchInput && collectionSearchInput.trim().length >= 2 && collectionResults.length)">
+    <div class="coll-section-header">Discover Cards</div>
+    <div x-show="collectionRandomLoading" class="coll-no-results" style="text-align:center;">Loading cards...</div>
+    <div class="coll-grid" x-show="collectionRandomCards.length && collectionMainFiltered().length">
+      <template x-for="card in collectionMainFiltered()" :key="card.id">
+        <div class="coll-card" @click="collectionOpenAdd(card)">
+          <img :src="card.images.small" :alt="card.name" class="coll-card-img" loading="lazy">
+          <div class="coll-card-body">
+            <div class="coll-card-name" x-text="card.name"></div>
+            <div class="coll-card-set" x-text="card.set.name + ' #' + card.number"></div>
+            <div class="coll-card-badges">
+              <span class="coll-badge-variant" x-text="card.rarity"></span>
+            </div>
+            <div class="coll-card-price" x-show="_cardMaxPrice(card) != null">
+              Market: $<span x-text="_cardMaxPrice(card).toFixed(2)"></span>
+            </div>
+            <div class="coll-card-price-na" x-show="_cardMaxPrice(card) == null">—</div>
+          </div>
+        </div>
+      </template>
+    </div>
+    <div class="coll-empty" x-show="!collectionRandomLoading && collectionRandomCards.length && !collectionMainFiltered().length">
+      <p>No cards match your filter.</p>
+    </div>
+  </div>
+
   <!-- API Search Results -->
   <div class="coll-api-results" x-show="collectionSearchInput && collectionSearchInput.trim().length >= 2 && collectionResults.length">
+    <div class="coll-results-header">
+      <span class="coll-results-count" x-text="collectionResults.length + ' cards'"></span>
+      <select class="coll-sort" x-model="collectionResultsSort" style="width:auto;">
+        <option value="name">Name</option>
+        <option value="set">Set</option>
+        <option value="price">Price (High)</option>
+        <option value="price-asc">Price (Low)</option>
+      </select>
+    </div>
     <div class="coll-results-grid">
-      <template x-for="card in collectionResults" :key="card.id">
+      <template x-for="card in collectionSortedResults()" :key="card.id">
         <div class="coll-result-card" @click="collectionOpenAdd(card)">
           <img :src="card.images.small" :alt="card.name" class="coll-result-img" loading="lazy">
           <div class="coll-result-info">
             <span class="coll-result-name" x-text="card.name"></span>
-            <span class="coll-result-set" x-text="card.set.name + ' #' + card.number"></span>
+            <span class="coll-result-price" x-show="_cardMaxPrice(card) != null">$<span x-text="_cardMaxPrice(card).toFixed(2)"></span></span>
           </div>
           <button class="coll-add-btn" @click.stop="collectionOpenAdd(card)">+</button>
         </div>
@@ -1457,7 +1512,7 @@
   <div class="coll-no-results" x-show="collectionSearchError" x-text="'Error: ' + collectionSearchError"></div>
 
   <!-- Collection Grid -->
-  <div class="coll-grid" x-show="collectionFiltered().length">
+  <div class="coll-grid" x-show="collectionViewMode === 'collection' && !(collectionSearchInput && collectionSearchInput.trim().length >= 2 && collectionResults.length) && collectionFiltered().length">
       <template x-for="entry in collectionFiltered()" :key="entry.id + '-' + entry.variant">
       <div class="coll-card" @click="collectionOpenEdit(entry)">
         <img :src="entry.image" :alt="entry.name" class="coll-card-img" loading="lazy">
@@ -1474,7 +1529,7 @@
       </div>
     </template>
   </div>
-  <div class="coll-empty" x-show="!collectionFiltered().length">
+  <div class="coll-empty" x-show="collectionViewMode === 'collection' && !(collectionSearchInput && collectionSearchInput.trim().length >= 2 && collectionResults.length) && !collectionFiltered().length">
     <p x-show="!collection.length">Your collection is empty. Search for cards above to start building!</p>
     <p x-show="collection.length && !collectionFiltered().length">No cards match your filter.</p>
   </div>

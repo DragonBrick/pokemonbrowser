@@ -119,12 +119,19 @@ document.addEventListener('alpine:init', () => {
 
     // === Collection State ===
     collection: [],
+    collectionViewMode: 'collection',
+    collectionRandomCards: [],
+    collectionRandomLoading: false,
+    collectionMainSort: 'price',
+    collectionPokemonFiltered: [],
+    collectionShowPokemonDropdown: false,
+    collectionCardCache: (() => { try { return JSON.parse(localStorage.getItem('pokemonCardCache') || '{}'); } catch(e) { return {}; } })(),
     collectionSearchInput: '',
     collectionSort: 'date',
     collectionResults: [],
+    collectionResultsSort: 'name',
     collectionApiLoading: false,
     collectionSearchError: null,
-    collectionApiDebounce: null,
     collectionModalOpen: false,
     collectionModalMode: 'add',
     collectionModalCard: null,
@@ -1891,28 +1898,131 @@ document.addEventListener('alpine:init', () => {
     },
 
     collectionSearchCards() {
-      if (this.collectionApiDebounce) clearTimeout(this.collectionApiDebounce);
       const q = (this.collectionSearchInput || '').trim();
       if (q.length < 2) {
         this.collectionResults = [];
         this.collectionSearchError = null;
         return;
       }
-      this.collectionApiDebounce = setTimeout(async () => {
-        this.collectionApiLoading = true;
-        this.collectionSearchError = null;
-        try {
-          const resp = await fetch(`https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(q)}&pageSize=20`);
-          if (!resp.ok) throw new Error('API returned ' + resp.status);
-          const data = await resp.json();
-          this.collectionResults = data.data || [];
-        } catch (e) {
-          this.collectionSearchError = e.message;
-          this.collectionResults = [];
-        } finally {
+      this.collectionApiLoading = true;
+      this.collectionSearchError = null;
+      const cacheKey = q.toLowerCase();
+      if (this.collectionCardCache[cacheKey]) {
+        this.collectionResults = this.collectionCardCache[cacheKey];
+        this.collectionApiLoading = false;
+        return;
+      }
+      this._collectionFetch(cacheKey, 0);
+    },
+
+    _collectionFetch(q, attempt) {
+      fetch(`https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(q)}*&pageSize=250`)
+        .then(resp => { if (!resp.ok) throw new Error('Could not load cards. Try a more specific name.'); return resp.json(); })
+        .then(data => {
+          const cards = data.data || [];
+          this.collectionCardCache[q] = cards;
+          this._saveCardCache();
+          this.collectionResults = cards;
           this.collectionApiLoading = false;
-        }
-      }, 300);
+        })
+        .catch(e => {
+          if (attempt < 1) {
+            setTimeout(() => this._collectionFetch(q, attempt + 1), 1500);
+          } else {
+            this.collectionSearchError = e.message;
+            this.collectionResults = [];
+            this.collectionApiLoading = false;
+          }
+        });
+    },
+
+    _saveCardCache() {
+      try { localStorage.setItem('pokemonCardCache', JSON.stringify(this.collectionCardCache)); } catch(e) {}
+    },
+
+    collectionFilterPokemonSuggestions() {
+      const q = this.collectionSearchInput.toLowerCase().trim();
+      if (!q) { this.collectionPokemonFiltered = []; return; }
+      this.collectionPokemonFiltered = (window.__POKEMON_DATA__ || [])
+        .filter(p => p.name.includes(q))
+        .slice(0, 15);
+    },
+
+    collectionSelectPokemon(p) {
+      this.collectionSearchInput = this.capitalize(p.name);
+      this.collectionShowPokemonDropdown = false;
+      this.collectionPokemonFiltered = [];
+      this.collectionSearchCards();
+    },
+
+    collectionSwitchView(mode) {
+      this.collectionViewMode = mode;
+      if (mode === 'main' && this.collectionRandomCards.length === 0) {
+        this.collectionFetchRandom();
+      }
+    },
+
+    _cardMaxPrice(card) {
+      const prices = card.tcgplayer && card.tcgplayer.prices;
+      if (!prices) return null;
+      let max = 0;
+      for (const key of Object.keys(prices)) {
+        const m = prices[key].market;
+        if (m != null && m > max) max = m;
+      }
+      return max > 0 ? max : null;
+    },
+
+    collectionFetchRandom() {
+      this.collectionRandomLoading = true;
+      fetch('https://api.pokemontcg.io/v2/cards?q=supertype:pokemon&pageSize=250')
+        .then(resp => { if (!resp.ok) throw new Error(); return resp.json(); })
+        .then(data => {
+          const cards = data.data || [];
+          for (let i = cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cards[i], cards[j]] = [cards[j], cards[i]];
+          }
+          this.collectionRandomCards = cards.slice(0, 20);
+          this.collectionRandomLoading = false;
+        })
+        .catch(() => {
+          this.collectionRandomCards = [];
+          this.collectionRandomLoading = false;
+        });
+    },
+
+    collectionMainFiltered() {
+      let result = [...this.collectionRandomCards];
+      if (this.collectionSearchInput && this.collectionSearchInput.trim()) {
+        const q = this.collectionSearchInput.toLowerCase().trim();
+        result = result.filter(c =>
+          c.name.toLowerCase().includes(q) ||
+          c.set.name.toLowerCase().includes(q)
+        );
+      }
+      const sort = this.collectionMainSort;
+      result.sort((a, b) => {
+        if (sort === 'name') return a.name.localeCompare(b.name);
+        if (sort === 'set') return a.set.name.localeCompare(b.set.name) || a.number.localeCompare(b.number);
+        const pa = this._cardMaxPrice(a) || 0;
+        const pb = this._cardMaxPrice(b) || 0;
+        return pb - pa;
+      });
+      return result;
+    },
+
+    collectionSortedResults() {
+      const arr = [...this.collectionResults];
+      const sort = this.collectionResultsSort;
+      arr.sort((a, b) => {
+        if (sort === 'name') return a.name.localeCompare(b.name);
+        if (sort === 'set') return a.set.name.localeCompare(b.set.name) || a.number.localeCompare(b.number);
+        const pa = this._cardMaxPrice(a) || 0;
+        const pb = this._cardMaxPrice(b) || 0;
+        return sort === 'price-asc' ? pa - pb : pb - pa;
+      });
+      return arr;
     },
 
     collectionOpenAdd(card) {

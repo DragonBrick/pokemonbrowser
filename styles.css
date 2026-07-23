@@ -1272,36 +1272,41 @@ body {
 /* API Search Results */
 .coll-api-results {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 12px; margin-bottom: 16px;
-  max-height: 360px; overflow-y: auto;
+  border-radius: 10px; padding: 12px; margin-bottom: 8px;
+}
+.coll-results-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; gap: 8px;
+}
+.coll-results-count {
+  font-size: 0.85rem; font-weight: 600; color: var(--text);
 }
 .coll-results-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 8px;
 }
 .coll-result-card {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px; border-radius: 8px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 10px;
   cursor: pointer; transition: background 0.15s;
   position: relative;
 }
 .coll-result-card:hover { background: var(--surface2); }
 .coll-result-img {
-  width: 60px; height: auto; border-radius: 4px; flex-shrink: 0;
+  width: 80px; height: auto; border-radius: 6px; flex-shrink: 0;
 }
 .coll-result-info {
-  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;
 }
 .coll-result-name {
-  font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+  font-size: 0.9rem; font-weight: 600; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
 }
-.coll-result-set {
-  font-size: 0.72rem; color: var(--text-dim); white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis;
+.coll-result-price {
+  font-size: 0.78rem; font-weight: 600; color: var(--accent);
 }
 .coll-add-btn {
-  width: 28px; height: 28px; border-radius: 50%;
+  width: 32px; height: 32px; border-radius: 50%;
   background: var(--accent); color: #fff; border: none;
   font-size: 1.1rem; font-weight: 700; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
@@ -1310,6 +1315,22 @@ body {
 .coll-add-btn:hover { background: var(--accent-hover); }
 .coll-no-results {
   text-align: center; padding: 20px; color: var(--text-dim); font-size: 0.9rem;
+}
+
+/* View Toggle */
+.coll-view-toggle {
+  display: flex; gap: 8px; justify-content: center; margin: 12px 0;
+}
+.coll-toggle-btn {
+  padding: 6px 24px; border-radius: 20px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer; font-size: 0.85rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.coll-toggle-btn.active {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.coll-toggle-btn:hover:not(.active) {
+  border-color: var(--accent);
 }
 
 /* Collection Grid */
@@ -1359,6 +1380,14 @@ body {
 .coll-card-price {
   font-size: 0.9rem; font-weight: 700; color: var(--text);
   margin-top: 4px;
+}
+.coll-card-price-na {
+  font-size: 0.85rem; color: var(--text-dim); margin-top: 4px;
+}
+
+.coll-section-header {
+  font-size: 0.95rem; font-weight: 600; color: var(--text);
+  padding: 8px 0 4px; margin-bottom: 2px;
 }
 
 .coll-empty {
