@@ -9,6 +9,32 @@ document.addEventListener('alpine:init', () => {
     showAddMenu: false,
     colWidths: (() => { try { return JSON.parse(localStorage.getItem('pokemonColWidths') || '{}'); } catch(e) { return {}; } })(),
     allTypes: ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'],
+    typeChart: [
+      /*             nor fire wat ele gra ice fig poi gro fly psy bug roc gho dra dar ste fai */
+      /* nor */ [1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, .5, 0,  1,  1, .5, 1],
+      /* fir */ [1, .5, .5, 1,  2, 2,  1,  1,  1,  1,  1,  2, .5, 1, .5, 1,  2,  1],
+      /* wat */ [1, 2, .5, 1, .5, 1,  1,  1,  2,  1,  1,  1,  2,  1, .5, 1,  1,  1],
+      /* ele */ [1, 1,  2, .5, .5, 1,  1,  1, 0,  2,  1,  1,  1,  1, .5, 1,  1,  1],
+      /* gra */ [1, .5, 2,  1, .5, 1,  1, .5, 2, .5, 1, .5, 2,  1, .5, 1, .5, 1],
+      /* ice */ [1, .5, .5, 1,  2, .5, 1,  1,  2,  2,  1,  1,  1,  1,  2,  1, .5, 1],
+      /* fig */ [2, 1,  1,  1,  1,  2,  1, .5, 1, .5, .5, .5, 2, 0,  1,  2,  2, .5],
+      /* poi */ [1, 1,  1,  1,  2, 1,  1, .5, .5, 1,  1,  1, .5, .5, 1,  1, 0,  2],
+      /* gro */ [1, 2,  1,  2, .5, 1,  1,  2,  1, 0,  1, .5, 2,  1,  1,  1,  2,  1],
+      /* fly */ [1, 1,  1, .5, 2,  1,  2,  1,  1,  1,  1,  2, .5, 1,  1,  1, .5, 1],
+      /* psy */ [1, 1,  1,  1,  1,  1,  2,  2,  1,  1, .5, 1,  1,  1,  1, 0, .5, 1],
+      /* bug */ [1, .5, 1,  1,  2, 1, .5, .5, 1, .5, 2,  1,  1, .5, 1,  2, .5, .5],
+      /* roc */ [1, 2,  1,  1,  1,  2, .5, 1, .5, 2,  1,  2,  1,  1,  1,  1, .5, 1],
+      /* gho */ [0, 1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  1,  1,  2,  1, .5, 1,  1],
+      /* dra */ [1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  1, .5, 0],
+      /* dar */ [1, 1,  1,  1,  1,  1, .5, 1,  1,  1,  2,  1,  1,  2,  1, .5, .5, .5],
+      /* ste */ [1, .5, .5, .5, 1,  2,  1,  1,  1,  1,  1,  1,  2,  1,  1,  1, .5, 2],
+      /* fai */ [1, .5, 1,  1,  1,  1,  2, .5, 1,  1,  1,  1,  1,  1,  2,  2, .5, 1],
+    ],
+    tcMoveType: null,
+    tcType1: null,
+    tcType2: null,
+    showHowToUseModal: false,
+    howToUseModalSection: null,
     activeTab: 'home',
     srActive: false,
     srStart: null,
@@ -76,10 +102,12 @@ document.addEventListener('alpine:init', () => {
     editingTeamNameIndex: null,
     showImportTextarea: false,
     importText: '',
+    importWarning: null,
     itemShowDropdown: false,
     itemFiltered: [],
     natures: ['Hardy','Lonely','Brave','Adamant','Naughty','Bold','Docile','Relaxed','Impish','Lax','Timid','Hasty','Serious','Jolly','Naive','Modest','Mild','Quiet','Bashful','Rash','Calm','Gentle','Sassy','Careful','Quirky'],
-    allItems: ['Absorb Bulb','Adrenaline Orb','Air Balloon','Amulet Coin','Assault Vest','Berry Juice','Big Root','Binding Band','Black Belt','Black Glasses','Black Sludge','Blunder Policy','Booster Energy','Bright Powder','Cell Battery','Charcoal','Choice Band','Choice Scarf','Choice Specs','Clear Amulet','Covert Cloak','Damp Rock','Destiny Knot','Eject Button','Eject Pack','Electric Seed','Everstone','Eviolite','Expert Belt','Flame Orb','Float Stone','Focus Band','Focus Sash','Ganlon Berry','Grassy Seed','Grip Claw','Hard Stone','Heat Rock','Heavy-Duty Boots','Icy Rock','Iron Ball','Kings Rock','Lagging Tail','Leppa Berry','Liechi Berry','Life Orb','Light Clay','Loaded Dice','Luck Incense','Lucky Egg','Lum Berry','Luminous Moss','Magnet','Mental Herb','Metal Coat','Metronome','Miracle Seed','Mirror Herb','Misty Seed','Muscle Band','Mystic Water','Never-Melt Ice','Oran Berry','Petaya Berry','Poison Barb','Power Herb','Psychic Seed','Punching Glove','Quick Claw','Razor Claw','Razor Fang','Red Card','Rocky Helmet','Room Service','Safety Goggles','Salac Berry','Scope Lens','Sharp Beak','Shed Shell','Silk Scarf','Silver Powder','Sitrus Berry','Smoke Ball','Smooth Rock','Snowball','Soft Sand','Spell Tag','Starf Berry','Sticky Barb','Terrain Extender','Throat Spray','Toxic Orb','Twisted Spoon','Utility Umbrella','White Herb','Wide Lens','Wise Glasses','Zoom Lens'],
+    natureEffects: {Hardy:['–','–'],Lonely:['Atk','Def'],Brave:['Atk','Spe'],Adamant:['Atk','SpA'],Naughty:['Atk','SpD'],Bold:['Def','Atk'],Docile:['–','–'],Relaxed:['Def','Spe'],Impish:['Def','SpA'],Lax:['Def','SpD'],Timid:['Spe','Atk'],Hasty:['Spe','Def'],Serious:['–','–'],Jolly:['Spe','SpA'],Naive:['Spe','SpD'],Modest:['SpA','Atk'],Mild:['SpA','Def'],Quiet:['SpA','Spe'],Bashful:['–','–'],Rash:['SpA','SpD'],Calm:['SpD','Atk'],Gentle:['SpD','Def'],Sassy:['SpD','Spe'],Careful:['SpD','SpA'],Quirky:['–','–']},
+    allItems: ['Absolite','Absorb Bulb','Adrenaline Orb','Aggronite','Air Balloon','Alakazite','Altarianite','Ampharosite','Amulet Coin','Assault Vest','Audinite','Banettite','Beedrillite','Berry Juice','Big Root','Binding Band','Black Belt','Black Glasses','Black Sludge','Blastoisinite','Blazikenite','Blunder Policy','Booster Energy','Bright Powder','Cameruptite','Cell Battery','Charcoal','Charizardite X','Charizardite Y','Choice Band','Choice Scarf','Choice Specs','Clear Amulet','Covert Cloak','Damp Rock','Destiny Knot','Diancite','Eject Button','Eject Pack','Electric Seed','Everstone','Eviolite','Expert Belt','Flame Orb','Float Stone','Focus Band','Focus Sash','Galladite','Ganlon Berry','Garchompite','Gardevoirite','Gengarite','Glalitite','Grassy Seed','Grip Claw','Gyaradosite','Hard Stone','Heat Rock','Heavy-Duty Boots','Heracronite','Houndoominite','Icy Rock','Iron Ball','Kangaskhanite','Kings Rock','Lagging Tail','Latiasite','Latiosite','Leppa Berry','Liechi Berry','Life Orb','Light Clay','Loaded Dice','Lopunnite','Lucarionite','Luck Incense','Lucky Egg','Lum Berry','Luminous Moss','Magnet','Manectite','Mawilite','Medichamite','Mental Herb','Metagrossite','Metal Coat','Metronome','Mewtwonite X','Mewtwonite Y','Miracle Seed','Mirror Herb','Misty Seed','Muscle Band','Mystic Water','Never-Melt Ice','Oran Berry','Petaya Berry','Pidgeotite','Pinsirite','Poison Barb','Power Herb','Psychic Seed','Punching Glove','Quick Claw','Razor Claw','Razor Fang','Red Card','Rocky Helmet','Room Service','Sablenite','Safety Goggles','Salac Berry','Salamencite','Sceptilite','Scizorite','Scope Lens','Sharp Beak','Sharpedonite','Shed Shell','Silk Scarf','Silver Powder','Sitrus Berry','Slowbronite','Smoke Ball','Smooth Rock','Snowball','Soft Sand','Spell Tag','Starf Berry','Steelixite','Sticky Barb','Swampertite','Terrain Extender','Throat Spray','Toxic Orb','Twisted Spoon','Tyranitarite','Utility Umbrella','Venusaurite','White Herb','Wide Lens','Wise Glasses','Zoom Lens'],
 
     // === Wallpaper State ===
     wpPokemon: null,
@@ -250,6 +278,12 @@ document.addEventListener('alpine:init', () => {
             const val = parseInt(c.value) || 0;
             return c.operator === '>' ? this.statTotal(p) > val : this.statTotal(p) < val;
           }));
+        } else if (type === 'stage') {
+          result = result.filter((p) => chips.some((c) => this.getEvolutionStage(p.id) === parseInt(c.value)));
+        } else if (type === 'evolved') {
+          result = result.filter((p) => chips.some((c) => c.value === 'true' ? this.isFullyEvolved(p.id) : !this.isFullyEvolved(p.id)));
+        } else if (type === 'starter') {
+          result = result.filter((p) => chips.some((c) => c.value === 'true' ? this.isStarter(p.id) : !this.isStarter(p.id)));
         }
       }
 
@@ -314,6 +348,10 @@ document.addEventListener('alpine:init', () => {
       } else if (type === 'total') {
         chip.operator = '>';
         chip.value = '';
+      } else if (type === 'stage') {
+        chip.value = '1';
+      } else if (type === 'evolved' || type === 'starter') {
+        chip.value = 'true';
       }
       this.chips.push(chip);
       if (!chip.editing) this.recompute();
@@ -335,6 +373,9 @@ document.addEventListener('alpine:init', () => {
       if (chip.type === 'move') return `Can learn ${chip.value || '...'}`;
       if (chip.type === 'type') return `Type: ${this.capitalize(chip.value) || '...'}`;
       if (chip.type === 'total') return `Total ${chip.operator} ${chip.value || '?'}`;
+      if (chip.type === 'stage') return `Stage ${chip.value}`;
+      if (chip.type === 'evolved') return 'Fully Evolved';
+      if (chip.type === 'starter') return 'Starter';
       return '';
     },
 
@@ -906,6 +947,25 @@ document.addEventListener('alpine:init', () => {
       return entry ? entry.chain : null;
     },
 
+    getEvolutionStage(id) {
+      const chain = this.getEvolutionChain(id);
+      if (!chain) return 1;
+      for (let i = 0; i < chain.length; i++) {
+        if (chain[i].some(e => e.id === id)) return i + 1;
+      }
+      return 1;
+    },
+
+    isFullyEvolved(id) {
+      const chain = this.getEvolutionChain(id);
+      if (!chain || !chain.length) return true;
+      return chain[chain.length - 1].some(e => e.id === id);
+    },
+
+    isStarter(id) {
+      return [1,4,7,152,155,158,252,255,258,387,390,393,495,498,501,650,653,656,722,725,728,810,813,816,906,909,912].includes(id);
+    },
+
     // === Team Builder Methods ===
 
     selectSlot(index) {
@@ -930,7 +990,7 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       const q = this.teamSearch.toLowerCase().trim();
-      this.teamSearchResults = this.pokemon.filter(p => p.name.includes(q)).slice(0, 30);
+      this.teamSearchResults = this.pokemon.filter(p => p.name.includes(q) && !p.name.includes('-mega')).slice(0, 30);
     },
 
     selectTeamPokemon(pokemon) {
@@ -942,6 +1002,14 @@ document.addEventListener('alpine:init', () => {
       slot.ivs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
       this.closeTeamPokemonSearch();
       this.persistSavedTeams();
+    },
+
+    getTeamMoveOptions(slot) {
+      const moves = slot.pokemon ? [...slot.pokemon.moves] : [];
+      for (const m of slot.moves) {
+        if (m && !moves.includes(m)) moves.push(m);
+      }
+      return moves;
     },
 
     removeTeamPokemon(index) {
@@ -1089,20 +1157,85 @@ document.addEventListener('alpine:init', () => {
     },
 
     importShowdown(text) {
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+      this.importWarning = null;
+      this.team = Array(6).fill(null).map(() => ({
+        pokemon: null, ability: '', item: '', nature: 'Hardy', teraType: 'Normal', level: 100,
+        evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+        ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
+        moves: ['', '', '', '']
+      }));
+      text = text.replace(/ {2,}/g, '\n');
+      const rawLines = text.split('\n');
       let currentSlot = -1;
-      for (const line of lines) {
-        if (!line || line.startsWith('---')) continue;
-        const pokeMatch = line.match(/^([A-Za-z-]+)(?:\s+@\s+(.+))?$/);
+      const warnings = [];
+      for (let li = 0; li < rawLines.length; li++) {
+        const trimmed = rawLines[li].trim();
+        if (!trimmed) continue;
+        if (trimmed.startsWith('---')) continue;
+
+        const fieldCheck = (fn) => {
+          if (currentSlot < 0 || currentSlot >= 6) return false;
+          const slot = this.team[currentSlot];
+          if (!slot) return false;
+          return fn(slot, trimmed);
+        };
+
+        let handled = false;
+
+        if (!handled) { const m = trimmed.match(/^Ability:\s*(.+)/i); if (m) { handled = fieldCheck((slot, v) => { slot.ability = m[1].trim().toLowerCase(); return true; }); } }
+        if (!handled) { const m = trimmed.match(/^Level:\s*(\d+)/i); if (m) { handled = fieldCheck((slot, v) => { slot.level = parseInt(m[1]); return true; }); } }
+        if (!handled) { const m = trimmed.match(/^EVs:\s*(.+)/i); if (m) { handled = fieldCheck((slot, v) => {
+          const labs = { HP: 'hp', Atk: 'atk', Def: 'def', SpA: 'spa', SpD: 'spd', Spe: 'spe' };
+          slot.evs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+          m[1].split('/').forEach(p => {
+            const pm = p.trim().match(/(\d+)\s+(HP|Atk|Def|SpA|SpD|Spe)/i);
+            if (pm) slot.evs[labs[pm[2]] || 'hp'] = parseInt(pm[1]);
+          });
+          return true;
+        }); } }
+        if (!handled) { const m = trimmed.match(/^IVs:\s*(.+)/i); if (m) { handled = fieldCheck((slot, v) => {
+          const labs = { HP: 'hp', atk: 'atk', def: 'def', SpA: 'spa', SpD: 'spd', Spe: 'spe' };
+          slot.ivs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
+          m[1].split('/').forEach(p => {
+            const pm = p.trim().match(/(\d+)\s+(HP|Atk|Def|SpA|SpD|Spe)/i);
+            if (pm) slot.ivs[labs[pm[2]] || 'hp'] = parseInt(pm[1]);
+          });
+          return true;
+        }); } }
+        if (!handled) { const m = trimmed.match(/^Tera\s+Type:\s*(.+)/i); if (m) { handled = fieldCheck((slot, v) => {
+          const t = m[1].trim().toLowerCase();
+          slot.teraType = this.allTypes.find(tp => tp === t) || 'Normal';
+          return true;
+        }); } }
+        if (!handled) { const m = trimmed.match(/^Shiny:\s*(.+)/i); if (m) { handled = true; } }
+        if (!handled) { const m = trimmed.match(/^([A-Z][a-z]+)\s+Nature$/i); if (m) { handled = fieldCheck((slot, v) => { slot.nature = m[1]; return true; }); } }
+        if (!handled) { const m = trimmed.match(/^-\s*(.+)/); if (m) { handled = fieldCheck((slot, v) => {
+          const moveName = m[1].trim().toLowerCase().replace(/\s+/g, '-');
+          const firstEmpty = slot.moves.indexOf('');
+          if (firstEmpty !== -1) slot.moves[firstEmpty] = moveName;
+          return true;
+        }); } }
+
+        if (handled) continue;
+
+        const atIdx = trimmed.indexOf(' @ ');
+        const namePart = atIdx !== -1 ? trimmed.slice(0, atIdx).trimEnd() : trimmed;
+        const itemPart = atIdx !== -1 ? trimmed.slice(atIdx + 3).trim() : '';
+        const pokeMatch = namePart.match(/^([A-Za-z\u00E0-\u00FC'.\s-]+?)(?:\s+\([MF]\))?\s*$/i);
         if (pokeMatch) {
           currentSlot++;
           if (currentSlot >= 6) break;
-          const name = pokeMatch[1].toLowerCase();
-          const pokemon = this.pokemon.find(p => p.name === name);
+          let name = pokeMatch[1].toLowerCase().replace(/\s+/g, '-');
+          let pokemon = this.pokemon.find(p => p.name === name);
+          if (!pokemon && name.endsWith('-mega')) {
+            const base = name.replace(/-mega-\w+$/, '').replace(/-mega$/, '');
+            pokemon = this.pokemon.find(p => p.name === base);
+          }
+          if (!pokemon) warnings.push('Line ' + (li + 1) + ': Unknown Pokémon "' + pokeMatch[1].trim() + '"');
           this.team[currentSlot] = {
             pokemon: pokemon || null,
             ability: '',
-            item: pokeMatch[2] || '',
+            item: itemPart,
             nature: 'Hardy',
             teraType: 'Normal',
             level: 100,
@@ -1110,54 +1243,17 @@ document.addEventListener('alpine:init', () => {
             ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
             moves: ['', '', '', '']
           };
-          if (!pokemon) continue;
-          if (pokemon.abilities && pokemon.abilities.length) {
+          if (pokemon && pokemon.abilities && pokemon.abilities.length) {
             this.team[currentSlot].ability = pokemon.abilities[0];
           }
           continue;
         }
-        if (currentSlot < 0 || currentSlot >= 6) continue;
-        const slot = this.team[currentSlot];
-        if (!slot) continue;
-        const abilityMatch = line.match(/^Ability:\s*(.+)/i);
-        if (abilityMatch) { slot.ability = abilityMatch[1].toLowerCase(); continue; }
-        const levelMatch = line.match(/^Level:\s*(\d+)/i);
-        if (levelMatch) { slot.level = parseInt(levelMatch[1]); continue; }
-        const evMatch = line.match(/^EVs:\s*(.+)/i);
-        if (evMatch) {
-          const evLabels = { HP: 'hp', Atk: 'atk', Def: 'def', SpA: 'spa', SpD: 'spd', Spe: 'spe' };
-          slot.evs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
-          evMatch[1].split('/').forEach(p => {
-            const m = p.trim().match(/(\d+)\s+(HP|Atk|Def|SpA|SpD|Spe)/i);
-            if (m) slot.evs[evLabels[m[2]] || 'hp'] = parseInt(m[1]);
-          });
-          continue;
-        }
-        const ivMatch = line.match(/^IVs:\s*(.+)/i);
-        if (ivMatch) {
-          const ivLabels = { HP: 'hp', Atk: 'atk', Def: 'def', SpA: 'spa', SpD: 'spd', Spe: 'spe' };
-          slot.ivs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
-          ivMatch[1].split('/').forEach(p => {
-            const m = p.trim().match(/(\d+)\s+(HP|Atk|Def|SpA|SpD|Spe)/i);
-            if (m) slot.ivs[ivLabels[m[2]] || 'hp'] = parseInt(m[1]);
-          });
-          continue;
-        }
-        const natureMatch = line.match(/^([A-Za-z]+)\s+Nature/i);
-        if (natureMatch) { slot.nature = natureMatch[1]; continue; }
-        const teraMatch = line.match(/^Tera Type:\s*(.+)/i);
-        if (teraMatch) {
-          const t = teraMatch[1].toLowerCase();
-          slot.teraType = this.allTypes.find(tp => tp === t) || 'Normal';
-          continue;
-        }
-        const moveMatch = line.match(/^-\s*(.+)/);
-        if (moveMatch) {
-          const moveName = moveMatch[1].toLowerCase().replace(/\s+/g, '-');
-          const firstEmpty = slot.moves.indexOf('');
-          if (firstEmpty !== -1) slot.moves[firstEmpty] = moveName;
+
+        if (currentSlot >= 0 && currentSlot < 6) {
+          warnings.push('Line ' + (li + 1) + ': Unrecognized "' + trimmed + '"');
         }
       }
+      if (warnings.length) this.importWarning = warnings.join('\n');
       this.selectedSlot = 0;
     },
 

@@ -20,6 +20,7 @@
           <button :class="{ active: activeTab === 'wallpaper' }" @click="switchTab('wallpaper')" @dblclick="closeDetail()">Wallpaper</button>
           <button :class="{ active: activeTab === 'speedrun' }" @click="switchTab('speedrun')" @dblclick="closeDetail()" x-show="pokemon.length">Speedrun</button>
           <button :class="{ active: activeTab === 'games' }" @click="switchTab('games')" @dblclick="closeDetail()" x-show="pokemon.length">Games</button>
+          <button :class="{ active: activeTab === 'types' }" @click="switchTab('types')" @dblclick="closeDetail()">Types</button>
         </nav>
       </div>
       <div class="header-actions">
@@ -130,46 +131,60 @@
         </div>
         <div x-show="showHowToUse">
           <div class="info-grid">
-            <div class="info-card">
+            <div class="info-card" @dblclick="howToUseModalSection = 'pokemon'; showHowToUseModal = true">
             <div class="info-icon">P</div>
             <div class="info-body">
               <div class="info-title">Pokémon</div>
               <div class="info-desc">Browse all Pokémon, view stats, evolution chains, and moves. Double-click a row or click an evolution node to open details.</div>
             </div>
           </div>
-          <div class="info-card">
+          <div class="info-card" @dblclick="howToUseModalSection = 'moves'; showHowToUseModal = true">
             <div class="info-icon">M</div>
             <div class="info-body">
               <div class="info-title">Moves</div>
               <div class="info-desc">Search moves by name, type, or category. See which Pokémon learn each move and double-click chips to jump to their details.</div>
             </div>
           </div>
-          <div class="info-card">
+          <div class="info-card" @dblclick="howToUseModalSection = 'abilities'; showHowToUseModal = true">
             <div class="info-icon">A</div>
             <div class="info-body">
               <div class="info-title">Abilities</div>
               <div class="info-desc">Browse abilities with descriptions and learn which Pokémon have them. Double-click ability chips to navigate.</div>
             </div>
           </div>
-          <div class="info-card">
+          <div class="info-card" @dblclick="howToUseModalSection = 'team'; showHowToUseModal = true">
             <div class="info-icon">T</div>
             <div class="info-body">
               <div class="info-title">Team Builder</div>
               <div class="info-desc">Build and save up to 10 teams. Double-click a team name to rename it. Use the Import/Export buttons to share teams in Pokémon Showdown format.</div>
             </div>
           </div>
-          <div class="info-card">
+          <div class="info-card" @dblclick="howToUseModalSection = 'wallpaper'; showHowToUseModal = true">
             <div class="info-icon">W</div>
             <div class="info-body">
               <div class="info-title">Wallpaper</div>
               <div class="info-desc">Generate a custom wallpaper for any Pokémon with stats, abilities, and a Pokédex fact. Download as a 1920×1080 PNG.</div>
             </div>
           </div>
-          <div class="info-card">
+          <div class="info-card" @dblclick="howToUseModalSection = 'speedrun'; showHowToUseModal = true">
             <div class="info-icon">S</div>
             <div class="info-body">
               <div class="info-title">Speedrun</div>
               <div class="info-desc">Navigate from a starting entity to a target in as few clicks as possible. Choose types (Pokémon, Move, Ability) and try to beat your best time!</div>
+            </div>
+          </div>
+          <div class="info-card" @dblclick="howToUseModalSection = 'games'; showHowToUseModal = true">
+            <div class="info-icon">G</div>
+            <div class="info-body">
+              <div class="info-title">Games</div>
+              <div class="info-desc">Play Who's That Pokémon (silhouette guessing) and Pokedle (attribute-based deduction) in Daily or Endless mode.</div>
+            </div>
+          </div>
+          <div class="info-card" @dblclick="howToUseModalSection = 'types'; showHowToUseModal = true">
+            <div class="info-icon">E</div>
+            <div class="info-body">
+              <div class="info-title">Type Calculator</div>
+              <div class="info-desc">Quickly calculate type effectiveness for any attacking move against one or two defending types.</div>
             </div>
           </div>
           </div>
@@ -190,6 +205,17 @@
     </div>
 
     <div x-show="activeTab === 'pokemon'">
+      <div class="home-section home-info tab-info">
+        <div class="home-info-header">
+          <h2 class="home-heading" style="font-size:0.9rem;">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'" style="font-size:0.8rem;"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card" @dblclick="howToUseModalSection = 'pokemon'; showHowToUseModal = true"><div class="info-icon">P</div><div class="info-body"><div class="info-title">Pokémon</div><div class="info-desc">Browse all Pokémon, view stats, evolution chains, and moves.</div></div></div>
+          </div>
+        </div>
+      </div>
       <div x-show="showDetailView == 'pokemon'">
         <div class="detail-page">
           <button class="detail-back" @click="closeDetail()">← Back to list</button>
@@ -292,6 +318,9 @@
                 <button @click="addChip('move'); showAddMenu = false">Move</button>
                 <button @click="addChip('type'); showAddMenu = false">Type</button>
                 <button @click="addChip('total'); showAddMenu = false">Total</button>
+                <button @click="addChip('stage'); showAddMenu = false">Evolution Stage</button>
+                <button @click="addChip('evolved'); showAddMenu = false">Fully Evolved</button>
+                <button @click="addChip('starter'); showAddMenu = false">Starter</button>
               </div>
             </div>
 
@@ -357,6 +386,19 @@
                         <input type="number" x-model="chip.value" placeholder="0" min="0" max="1000" @keyup.enter="commitChip(chip)">
                       </span>
                     </template>
+                    <template x-if="chip.type === 'stage'">
+                      <select x-model="chip.value" @change="commitChip(chip)">
+                        <option value="1">Stage 1</option>
+                        <option value="2">Stage 2</option>
+                        <option value="3">Stage 3</option>
+                      </select>
+                    </template>
+                    <template x-if="chip.type === 'evolved' || chip.type === 'starter'">
+                      <select x-model="chip.value" @change="commitChip(chip)">
+                        <option value="true">True</option>
+                        <option value="false">False</option>
+                      </select>
+                    </template>
                     <button class="chip-commit" @click="commitChip(chip)">✓</button>
                   </div>
                 </template>
@@ -411,6 +453,17 @@
     </div>
 
     <div x-show="activeTab === 'moves'">
+      <div class="home-section home-info tab-info">
+        <div class="home-info-header">
+          <h2 class="home-heading" style="font-size:0.9rem;">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'" style="font-size:0.8rem;"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card" @dblclick="howToUseModalSection = 'moves'; showHowToUseModal = true"><div class="info-icon">M</div><div class="info-body"><div class="info-title">Moves</div><div class="info-desc">Search moves by name, type, or category.</div></div></div>
+          </div>
+        </div>
+      </div>
       <div x-show="showDetailView == 'move'">
         <div class="detail-page">
           <button class="detail-back" @click="closeDetail()">← Back to list</button>
@@ -560,6 +613,17 @@
     </div>
 
     <div x-show="activeTab === 'abilities'">
+      <div class="home-section home-info tab-info">
+        <div class="home-info-header">
+          <h2 class="home-heading" style="font-size:0.9rem;">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'" style="font-size:0.8rem;"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card" @dblclick="howToUseModalSection = 'abilities'; showHowToUseModal = true"><div class="info-icon">A</div><div class="info-body"><div class="info-title">Abilities</div><div class="info-desc">Browse abilities with descriptions.</div></div></div>
+          </div>
+        </div>
+      </div>
       <div x-show="showDetailView == 'ability'">
         <div class="detail-page">
           <button class="detail-back" @click="closeDetail()">← Back to list</button>
@@ -665,6 +729,17 @@
     </div>
 
     <div x-show="activeTab === 'wallpaper'">
+      <div class="home-section home-info tab-info">
+        <div class="home-info-header">
+          <h2 class="home-heading" style="font-size:0.9rem;">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'" style="font-size:0.8rem;"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card" @dblclick="howToUseModalSection = 'wallpaper'; showHowToUseModal = true"><div class="info-icon">W</div><div class="info-body"><div class="info-title">Wallpaper</div><div class="info-desc">Generate custom wallpapers.</div></div></div>
+          </div>
+        </div>
+      </div>
       <div class="wp-page">
         <div class="wp-header">
           <h2 class="wp-title">Wallpaper Generator</h2>
@@ -698,6 +773,17 @@
     </div>
 
     <div x-show="activeTab === 'speedrun'">
+      <div class="home-section home-info tab-info">
+        <div class="home-info-header">
+          <h2 class="home-heading" style="font-size:0.9rem;">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'" style="font-size:0.8rem;"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card" @dblclick="howToUseModalSection = 'speedrun'; showHowToUseModal = true"><div class="info-icon">S</div><div class="info-body"><div class="info-title">Speedrun</div><div class="info-desc">Navigate to a target in few clicks.</div></div></div>
+          </div>
+        </div>
+      </div>
       <div class="sr-page">
         <div class="sr-header">
           <h2 class="sr-title">Speedrun</h2>
@@ -827,6 +913,17 @@
     </div>
 
     <div x-show="activeTab === 'teambuilder'">
+      <div class="home-section home-info tab-info">
+        <div class="home-info-header">
+          <h2 class="home-heading" style="font-size:0.9rem;">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'" style="font-size:0.8rem;"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card" @dblclick="howToUseModalSection = 'team'; showHowToUseModal = true"><div class="info-icon">T</div><div class="info-body"><div class="info-title">Team Builder</div><div class="info-desc">Build and save up to 10 teams.</div></div></div>
+          </div>
+        </div>
+      </div>
       <div class="tb-page">
         <div class="tb-header">
           <button class="detail-back" @click="activeTab = 'home'">← Close</button>
@@ -855,9 +952,10 @@
         </div>
 
         <div class="tb-import-area" x-show="showImportTextarea">
-          <textarea class="tb-import-textarea" x-model="importText" placeholder="Paste Showdown team here..."></textarea>
+          <textarea class="tb-import-textarea" x-model="importText" @input="importWarning = null" placeholder="Paste Showdown team here..."></textarea>
+          <div class="tb-import-warning" x-show="importWarning" x-text="importWarning"></div>
           <button class="btn btn-tb" @click="importShowdown(importText); showImportTextarea = false">Import</button>
-          <button class="btn btn-tb-cancel" @click="showImportTextarea = false; importText = ''">Cancel</button>
+          <button class="btn btn-tb-cancel" @click="showImportTextarea = false; importText = ''; importWarning = null">Cancel</button>
         </div>
 
         <div class="tb-layout">
@@ -942,7 +1040,7 @@
                       <label class="tb-label">Nature</label>
                       <select class="tb-select" x-model="team[selectedSlot].nature">
                         <template x-for="n in natures" :key="n">
-                          <option :value="n" x-text="n"></option>
+                          <option :value="n" x-text="natureEffects[n][0] === '–' ? n : n + '  (+' + natureEffects[n][0] + ' −' + natureEffects[n][1] + ')'"></option>
                         </template>
                       </select>
                     </div>
@@ -999,7 +1097,7 @@
                           <select class="tb-select tb-move-select"
                                   x-model="team[selectedSlot].moves[mi]">
                             <option value="">—</option>
-                            <template x-for="m in (team[selectedSlot].pokemon.moves || [])" :key="m">
+                            <template x-for="m in getTeamMoveOptions(team[selectedSlot])" :key="m">
                               <option :value="m" x-text="m.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></option>
                             </template>
                           </select>
@@ -1087,6 +1185,17 @@
     </div>
 
     <div x-show="activeTab === 'games'">
+      <div class="home-section home-info tab-info">
+        <div class="home-info-header">
+          <h2 class="home-heading" style="font-size:0.9rem;">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'" style="font-size:0.8rem;"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card" @dblclick="howToUseModalSection = 'games'; showHowToUseModal = true"><div class="info-icon">G</div><div class="info-body"><div class="info-title">Games</div><div class="info-desc">Play Who's That Pokémon and Pokedle.</div></div></div>
+          </div>
+        </div>
+      </div>
       <div class="gm-page">
         <div class="gm-chooser">
           <div class="gm-chooser-row">
@@ -1215,11 +1324,139 @@
       </div>
     </div>
 
+    <div x-show="activeTab === 'types'">
+      <div class="home-section home-info tab-info">
+        <div class="home-info-header">
+          <h2 class="home-heading" style="font-size:0.9rem;">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'" style="font-size:0.8rem;"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card" @dblclick="howToUseModalSection = 'types'; showHowToUseModal = true"><div class="info-icon">E</div><div class="info-body"><div class="info-title">Type Calculator</div><div class="info-desc">Calculate type effectiveness.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="tc-page">
+        <h2 class="tc-title">Type Effectiveness Calculator</h2>
+
+        <div class="tc-section">
+          <div class="tc-section-label">Move Type</div>
+          <div class="tc-type-grid">
+            <template x-for="t in allTypes" :key="t">
+              <span class="type-badge tc-type-btn" :class="'type-' + t + (tcMoveType === t ? ' tc-selected' : '')" @click="tcMoveType = t" x-text="capitalize(t)"></span>
+            </template>
+          </div>
+        </div>
+
+        <div class="tc-section">
+          <div class="tc-section-label">Target Type 1</div>
+          <div class="tc-type-grid">
+            <template x-for="t in allTypes" :key="t">
+              <span class="type-badge tc-type-btn" :class="'type-' + t + (tcType1 === t ? ' tc-selected' : '')" @click="tcType1 = t" x-text="capitalize(t)"></span>
+            </template>
+          </div>
+        </div>
+
+        <div class="tc-section">
+          <div class="tc-section-label">Target Type 2</div>
+          <div class="tc-type-grid">
+            <span class="type-badge tc-type-btn tc-type-none" :class="{ 'tc-selected': !tcType2 }" @click="tcType2 = null" style="background:#333;color:#aaa;">None</span>
+            <template x-for="t in allTypes" :key="t">
+              <span class="type-badge tc-type-btn" :class="'type-' + t + (tcType2 === t ? ' tc-selected' : '')" @click="tcType2 = t" x-text="capitalize(t)"></span>
+            </template>
+          </div>
+        </div>
+
+        <div class="tc-result" x-show="tcMoveType && tcType1">
+          <template x-for="eff in [((() => { const ai = allTypes.indexOf(tcMoveType); const di1 = allTypes.indexOf(tcType1); const eff1 = typeChart[ai][di1]; if (!tcType2) return eff1; const di2 = allTypes.indexOf(tcType2); return eff1 * typeChart[ai][di2]; })())]" :key="'r'">
+            <div>
+              <div class="tc-result-value" :class="eff >= 2 ? 'tc-eff-super' : eff <= 0.5 ? 'tc-eff-weak' : eff === 0 ? 'tc-eff-immune' : 'tc-eff-neutral'">
+                <span x-text="eff === 0 ? '0' : eff === 0.25 ? '¼' : eff === 0.5 ? '½' : eff === 1 ? '1' : eff === 2 ? '2' : eff === 4 ? '4' : eff + ''"></span><span class="tc-result-x">×</span>
+              </div>
+              <div class="tc-result-label" x-text="eff >= 2 ? 'Super Effective!' : eff <= 0.5 && eff > 0 ? 'Not Very Effective…' : eff === 0 ? 'Immune!' : 'Neutral'"></div>
+            </div>
+          </template>
+          <div class="tc-breakdown" x-show="tcType2">
+            <span x-text="'vs ' + capitalize(tcType1) + ': ' + (typeChart[allTypes.indexOf(tcMoveType)][allTypes.indexOf(tcType1)] === 0 ? '0' : typeChart[allTypes.indexOf(tcMoveType)][allTypes.indexOf(tcType1)] === 0.5 ? '½' : typeChart[allTypes.indexOf(tcMoveType)][allTypes.indexOf(tcType1)] === 2 ? '2' : '1') + '×'"></span>
+            <span class="tc-bd-mul">×</span>
+            <span x-text="'vs ' + capitalize(tcType2) + ': ' + (typeChart[allTypes.indexOf(tcMoveType)][allTypes.indexOf(tcType2)] === 0 ? '0' : typeChart[allTypes.indexOf(tcMoveType)][allTypes.indexOf(tcType2)] === 0.5 ? '½' : typeChart[allTypes.indexOf(tcMoveType)][allTypes.indexOf(tcType2)] === 2 ? '2' : '1') + '×'"></span>
+            <span class="tc-bd-mul">=</span>
+            <strong x-text="(() => { const ai = allTypes.indexOf(tcMoveType); const v = typeChart[ai][allTypes.indexOf(tcType1)] * typeChart[ai][allTypes.indexOf(tcType2)]; return (v === 0 ? '0' : v === 0.25 ? '¼' : v === 0.5 ? '½' : v === 1 ? '1' : v === 2 ? '2' : v === 4 ? '4' : v) + '×'; })()"></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div x-show="showHowToUseModal" class="htu-overlay" @click.self="showHowToUseModal = false" @keydown.escape.window="showHowToUseModal = false">
+      <div class="htu-modal">
+        <button class="htu-close" @click="showHowToUseModal = false">×</button>
+        <h2 class="htu-title" x-text="'How to Use — ' + ({pokemon:'Pokémon Browser',moves:'Moves',abilities:'Abilities',team:'Team Builder',wallpaper:'Wallpaper Generator',speedrun:'Speedrun',games:'Games',types:'Type Calculator'}[howToUseModalSection] || '')"></h2>
+
+        <div class="htu-card" x-show="howToUseModalSection === 'pokemon'">
+          <div class="htu-icon htu-icon-poke">P</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Pokémon Browser</div>
+            <div class="htu-card-desc">Browse all Pokémon with sortable columns, stat totals, and type badges. Double-click a row to open the detail panel showing stats, evolution chains (with sprites and clickable nodes), and a full move list. Use the search bar to find Pokémon by name, and add filters for generation, type, stat range, total range, moves, and abilities. Resize columns by dragging their right edge.</div>
+          </div>
+        </div>
+        <div class="htu-card" x-show="howToUseModalSection === 'moves'">
+          <div class="htu-icon htu-icon-move">M</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Moves</div>
+            <div class="htu-card-desc">Search and filter moves by name, type, category, min learners, or which Pokémon learn them. Columns show power, accuracy, PP, damage class, and description. Double-click a move chip in any filter to jump to its detail view, where you can see all Pokémon that learn it and filter that list.</div>
+          </div>
+        </div>
+        <div class="htu-card" x-show="howToUseModalSection === 'abilities'">
+          <div class="htu-icon htu-icon-ability">A</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Abilities</div>
+            <div class="htu-card-desc">Browse abilities with their full descriptions. Filter by generation or by which Pokémon have them. Double-click any ability chip to navigate to its detail view. Each ability entry shows the description and a list of Pokémon that can have it.</div>
+          </div>
+        </div>
+        <div class="htu-card" x-show="howToUseModalSection === 'team'">
+          <div class="htu-icon htu-icon-team">T</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Team Builder</div>
+            <div class="htu-card-desc">Build competitive teams across 10 save slots. Each slot supports a Pokémon, ability, item, nature, Tera type, level, custom EV/IV spreads, and four moves. Use Import/Export to share teams in Pokémon Showdown format. Double-click the team name to rename it. The 3-second auto-save keeps your progress safe.</div>
+          </div>
+        </div>
+        <div class="htu-card" x-show="howToUseModalSection === 'wallpaper'">
+          <div class="htu-icon htu-icon-wall">W</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Wallpaper Generator</div>
+            <div class="htu-card-desc">Generate a custom 1920×1080 wallpaper for any Pokémon. Search for a Pokémon, click Generate, and the app draws a canvas with the official artwork, type-colored accents, stat bars, and a Pokédex fact. Download the result as a high-quality PNG image.</div>
+          </div>
+        </div>
+        <div class="htu-card" x-show="howToUseModalSection === 'speedrun'">
+          <div class="htu-icon htu-icon-sr">S</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Speedrun</div>
+            <div class="htu-card-desc">Test your navigation speed: a random start entity and target entity are chosen. Navigate through the app to reach the target in as few clicks as possible. Customize which entity types (Pokémon, Move, Ability) are used for start and target, or pick specific entities. History is saved between sessions.</div>
+          </div>
+        </div>
+        <div class="htu-card" x-show="howToUseModalSection === 'games'">
+          <div class="htu-icon htu-icon-game">G</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Games</div>
+            <div class="htu-card-desc">Play Who's That Pokémon (guess the Pokémon from its silhouette) or Pokedle (deduce the Pokémon by guessing and checking type, generation, height, and weight feedback). Both support daily and endless modes. Scores persist during your session.</div>
+          </div>
+        </div>
+        <div class="htu-card" x-show="howToUseModalSection === 'types'">
+          <div class="htu-icon htu-icon-type">E</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Type Calculator</div>
+            <div class="htu-card-desc">Quickly calculate type effectiveness for any attacking move against one or two defending types. Select the move type and target types from the clickable grid. The result shows the overall multiplier with a color-coded verdict and a per-type breakdown for dual-type targets.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <footer class="footer">
       <span x-show="activeTab === 'pokemon'">Showing <strong x-text="filteredPokemon.length"></strong> of <strong x-text="pokemon.length"></strong> Pokémon</span>
       <span x-show="activeTab === 'moves'">Showing <strong x-text="filteredMoves.length"></strong> of <strong x-text="moves.length"></strong> Moves</span>
       <span x-show="activeTab === 'abilities'">Showing <strong x-text="filteredAbilities.length"></strong> of <strong x-text="abilities.length"></strong> Abilities</span>
       <span x-show="activeTab === 'games'">Pokémon Games</span>
+      <span x-show="activeTab === 'types'">Type Calculator</span>
     </footer>
   </div>
   <script src="pokemon-data.js"></script>

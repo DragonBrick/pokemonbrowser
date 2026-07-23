@@ -22,8 +22,7 @@ body {
   color: var(--text);
   min-height: 100vh;
 }
-
-.app { max-width: 1400px; margin: 0 auto; padding: 20px; }
+.tb-import-warning { background: #3b1a1a; border: 1px solid #7f1d1d; color: #fca5a5; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; white-space: pre-wrap; margin-bottom: 8px; line-height: 1.5; }
 
 /* Header */
 .header {
@@ -1186,3 +1185,56 @@ body {
 .btn-secondary:hover { background: var(--surface3); }
 
 .autocomplete-sprite { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; }
+
+.tab-info { margin-bottom: 4px !important; padding-bottom: 0 !important; border-bottom: 1px solid var(--border); }
+.tab-info .home-info-header { padding: 8px 0; }
+.tab-info .info-grid { gap: 4px; }
+.tab-info .info-card { padding: 6px 10px; }
+.tab-info .info-icon { width: 24px; height: 24px; font-size: 0.7rem; }
+.tab-info .info-title { font-size: 0.78rem; }
+.tab-info .info-desc { font-size: 0.72rem; line-height: 1.3; }
+
+/* How to Use Modal */
+.htu-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; }
+.htu-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; max-width: 900px; width: 95%; padding: 40px; position: relative; max-height: 85vh; overflow-y: auto; }
+.htu-close { position: absolute; top: 16px; right: 20px; background: none; border: none; color: var(--text-dim); font-size: 2.2rem; cursor: pointer; line-height: 1; padding: 8px 14px; border-radius: 8px; }
+.htu-close:hover { color: var(--text); background: var(--surface2); }
+.htu-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; padding-right: 50px; }
+.htu-grid { display: flex; flex-direction: column; gap: 18px; }
+.htu-card { display: flex; gap: 16px; padding: 20px 24px; background: var(--surface1); border: 1px solid var(--border); border-radius: 12px; }
+.htu-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800; flex-shrink: 0; }
+.htu-icon-poke { background: #065f46; color: #6ee7b7; }
+.htu-icon-move { background: #7f1d1d; color: #fca5a5; }
+.htu-icon-ability { background: #3730a3; color: #a5b4fc; }
+.htu-icon-team { background: #854d0e; color: #fcd34d; }
+.htu-icon-wall { background: #1e3a5f; color: #93c5fd; }
+.htu-icon-sr { background: #3b0764; color: #d8b4fe; }
+.htu-icon-game { background: #065f46; color: #6ee7b7; }
+.htu-icon-type { background: #7f1d1d; color: #fca5a5; }
+.htu-body { min-width: 0; }
+.htu-card-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 6px; }
+.htu-card-desc { font-size: 0.95rem; color: var(--text-dim); line-height: 1.6; }
+
+/* Type Calculator */
+.tc-page { padding: 16px 0; max-width: 600px; }
+.tc-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; }
+.tc-section { margin-bottom: 18px; }
+.tc-section-label { font-size: 0.82rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.tc-type-grid { display: flex; gap: 4px; flex-wrap: wrap; }
+.tc-type-btn { cursor: pointer; opacity: 0.6; transition: opacity 0.15s, box-shadow 0.15s; }
+.tc-type-btn:hover { opacity: 1; }
+.tc-selected { opacity: 1; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent); }
+.tc-type-none { opacity: 0.6; }
+.tc-type-none:hover { opacity: 1; }
+.tc-result { margin-top: 24px; text-align: center; padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.tc-result-value { font-size: 3rem; font-weight: 800; line-height: 1; }
+.tc-result-x { font-size: 1.8rem; font-weight: 400; opacity: 0.7; }
+.tc-result-label { font-size: 1rem; font-weight: 600; margin-top: 6px; }
+.tc-eff-super { color: #6ee7b7; }
+.tc-eff-weak { color: #fca5a5; }
+.tc-eff-immune { color: #a5b4fc; }
+.tc-eff-neutral { color: var(--text); }
+.tc-breakdown { margin-top: 12px; font-size: 0.85rem; color: var(--text-dim); display: flex; align-items: center; justify-content: center; gap: 6px; }
+.tc-bd-mul { opacity: 0.5; }
+
+
