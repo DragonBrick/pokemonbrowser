@@ -1933,6 +1933,41 @@ document.addEventListener('alpine:init', () => {
       this.collectionModalOpen = true;
     },
 
+    collectionOpenEdit(entry) {
+      this.collectionModalMode = 'edit';
+      this.collectionModalCard = entry;
+      this.collectionModalEntryIndex = this.collection.indexOf(entry);
+
+      const prices = {};
+      if (entry.priceUngraded != null) {
+        prices[entry.variant] = { market: entry.priceUngraded };
+      }
+      const variants = Object.keys(prices).length > 0
+        ? Object.keys(prices).map(key => ({ key, label: this.variantLabel(key), price: prices[key].market || 0 }))
+        : [{ key: entry.variant, label: entry.variantLabel, price: entry.priceUngraded || 0 }];
+
+      this.collectionModalVariants = variants;
+      this.collectionModalVariant = entry.variant;
+      this.collectionModalGrade = entry.grade;
+      this.collectionModalQuantity = entry.quantity;
+      this.collectionModalOpen = true;
+    },
+
+    collectionModalDelete() {
+      this.collectionModalOpen = false;
+      this.collectionDeleteConfirm = true;
+    },
+
+    collectionModalDeleteConfirm() {
+      if (this.collectionModalEntryIndex != null) {
+        this.collection.splice(this.collectionModalEntryIndex, 1);
+        this.collectionSave();
+      }
+      this.collectionDeleteConfirm = false;
+      this.collectionModalEntryIndex = null;
+      this.collectionModalCard = null;
+    },
+
     get collectionModalVariantPrice() {
       if (!this.collectionModalVariant || !this.collectionModalVariants.length) return null;
       const v = this.collectionModalVariants.find(v => v.key === this.collectionModalVariant);
