@@ -387,6 +387,12 @@ document.addEventListener('alpine:init', () => {
       return map[key] || key;
     },
 
+    natureLabel(n) {
+      const e = this.natureEffects[n];
+      if (!e || e[0] === '–') return n;
+      return n + '  (+' + e[0] + ' \u2212' + e[1] + ')';
+    },
+
     capitalize(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
     },

@@ -1040,7 +1040,7 @@
                       <label class="tb-label">Nature</label>
                       <select class="tb-select" x-model="team[selectedSlot].nature">
                         <template x-for="n in natures" :key="n">
-                          <option :value="n" x-text="natureEffects[n][0] === '–' ? n : n + '  (+' + natureEffects[n][0] + ' −' + natureEffects[n][1] + ')'"></option>
+                          <option :value="n" x-text="natureLabel(n)"></option>
                         </template>
                       </select>
                     </div>
