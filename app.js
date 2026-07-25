@@ -159,6 +159,17 @@ document.addEventListener('alpine:init', () => {
     gmPokedleFiltered: [],
     gmScore: 0,
 
+    // === Items State ===
+    items: [],
+    itemSearch: '',
+    itemChips: [],
+    itemSortKey: 'name',
+    itemSortDir: 'asc',
+    filteredItems: [],
+    itemShowAddMenu: false,
+    itemCategories: ['Battle', 'Berry', 'Choice', 'Evolution', 'Mega Stone', 'Misc', 'Type Boost'],
+    itemDetailSearch: '',
+
     moveColumns: [
       { key: 'name', label: 'Move', sortable: true },
       { key: 'type', label: 'Type', sortable: true },
@@ -230,6 +241,10 @@ document.addEventListener('alpine:init', () => {
       }
       if (window.__FACTS_DATA__) {
         this.factsData = window.__FACTS_DATA__;
+      }
+      if (window.__ITEMS_DATA__) {
+        this.items = window.__ITEMS_DATA__;
+        this.itemRecompute();
       }
       this.collectionLoad();
       try {
@@ -1434,6 +1449,78 @@ document.addEventListener('alpine:init', () => {
         this.gmRevealed = true;
         this.gmMessage = 'Out of guesses! It was ' + this.capitalize(target.name.replace(/-/g, ' ')) + '.';
       }
+    },
+
+    // === Items Methods ===
+
+    itemRecompute() {
+      let result = [...this.items];
+      if (this.itemSearch) {
+        const q = this.itemSearch.toLowerCase();
+        result = result.filter(i => i.name.toLowerCase().includes(q));
+      }
+      const groups = {};
+      for (const chip of this.itemChips) {
+        if (!groups[chip.type]) groups[chip.type] = [];
+        groups[chip.type].push(chip);
+      }
+      for (const [type, chips] of Object.entries(groups)) {
+        if (type === 'category') {
+          result = result.filter(i => chips.some(c => i.category === c.value));
+        }
+      }
+      const key = this.itemSortKey;
+      const dir = this.itemSortDir === 'asc' ? 1 : -1;
+      result.sort((a, b) => {
+        const va = a[key] || '', vb = b[key] || '';
+        return va.localeCompare(vb) * dir;
+      });
+      this.filteredItems = result;
+    },
+
+    toggleItemSort(key) {
+      if (this.itemSortKey === key) {
+        if (this.itemSortDir === 'asc') {
+          this.itemSortDir = 'desc';
+        } else {
+          this.itemSortKey = 'name';
+          this.itemSortDir = 'asc';
+        }
+      } else {
+        this.itemSortKey = key;
+        this.itemSortDir = 'asc';
+      }
+      this.itemRecompute();
+    },
+
+    addItemChip(type) {
+      const chip = { type, editing: true };
+      if (type === 'category') {
+        chip.value = 'Battle';
+      }
+      this.itemChips.push(chip);
+      if (!chip.editing) this.itemRecompute();
+    },
+
+    commitItemChip(chip) {
+      chip.editing = false;
+      this.itemRecompute();
+    },
+
+    removeItemChip(index) {
+      this.itemChips.splice(index, 1);
+      this.itemRecompute();
+    },
+
+    itemChipLabel(chip) {
+      if (chip.type === 'category') return `Category: ${chip.value}`;
+      return '';
+    },
+
+    openItemDetail(item) {
+      this.showDetailView = 'item';
+      this.detailItem = item;
+      this.itemDetailSearch = '';
     },
 
     // === Wallpaper Methods ===

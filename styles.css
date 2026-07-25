@@ -1468,4 +1468,17 @@ body {
   display: flex; gap: 8px; margin-top: 8px;
 }
 
+/* Item Category Badges */
+.item-cat-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 12px;
+  font-size: 0.75rem; font-weight: 600; color: #fff;
+}
+.item-cat-berry { background: #78C850; }
+.item-cat-choice { background: #F85888; }
+.item-cat-type-boost { background: #6890F0; }
+.item-cat-evolution { background: #A040A0; }
+.item-cat-battle { background: #C03028; }
+.item-cat-mega-stone { background: #7038F8; }
+.item-cat-misc { background: #B8B8D0; color: #000; }
+
 

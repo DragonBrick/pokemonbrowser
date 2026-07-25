@@ -21,6 +21,7 @@
           <button :class="{ active: activeTab === 'speedrun' }" @click="switchTab('speedrun')" @dblclick="closeDetail()" x-show="pokemon.length">Speedrun</button>
           <button :class="{ active: activeTab === 'games' }" @click="switchTab('games')" @dblclick="closeDetail()" x-show="pokemon.length">Games</button>
           <button :class="{ active: activeTab === 'collection' }" @click="switchTab('collection')" @dblclick="closeDetail()">Collection</button>
+          <button :class="{ active: activeTab === 'items' }" @click="switchTab('items')" @dblclick="closeDetail()">Items</button>
           <button :class="{ active: activeTab === 'types' }" @click="switchTab('types')" @dblclick="closeDetail()">Types</button>
         </nav>
       </div>
@@ -28,6 +29,7 @@
         <span class="result-count" x-show="activeTab === 'pokemon'" x-text="`${filteredPokemon.length} / ${pokemon.length} Pokémon`"></span>
         <span class="result-count" x-show="activeTab === 'moves'" x-text="`${filteredMoves.length} / ${moves.length} Moves`"></span>
         <span class="result-count" x-show="activeTab === 'abilities'" x-text="`${filteredAbilities.length} / ${abilities.length} Abilities`"></span>
+        <span class="result-count" x-show="activeTab === 'items'" x-text="`${filteredItems.length} / ${items.length} Items`"></span>
 
       </div>
     </header>
@@ -1388,6 +1390,109 @@
       </div>
     </div>
 
+    <div x-show="activeTab === 'items'">
+      <div class="home-section home-info tab-info">
+        <div class="home-info-header">
+          <h2 class="home-heading" style="font-size:0.9rem;">How to Use</h2>
+          <button class="btn-text" @click="showHowToUse = !showHowToUse" x-text="showHowToUse ? 'Hide' : 'Show'" style="font-size:0.8rem;"></button>
+        </div>
+        <div x-show="showHowToUse">
+          <div class="info-grid">
+            <div class="info-card"><div class="info-icon">I</div><div class="info-body"><div class="info-title">Items</div><div class="info-desc">Browse held items and key items with search and category filters.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div x-show="showDetailView == 'item'">
+        <div class="detail-page">
+          <button class="detail-back" @click="closeDetail()">← Back to list</button>
+          <div class="detail-layout">
+            <div class="detail-header">
+              <div class="detail-info">
+                <h2 class="detail-name" x-text="capitalize(detailItem.name)"></h2>
+                <div class="detail-meta">
+                  <div><strong>Category:</strong> <span class="item-cat-badge" :class="'item-cat-' + detailItem.category.replace(/ /g, '-').toLowerCase()" x-text="detailItem.category"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-section">
+              <h3>Items in this Category</h3>
+              <input type="text" class="search-input" placeholder="Search items..." x-model="itemDetailSearch">
+              <div class="detail-move-list">
+                <template x-for="item in items.filter(i => i.category === detailItem.category).filter(i => !itemDetailSearch || i.name.toLowerCase().includes(itemDetailSearch.toLowerCase()))" :key="item.name">
+                  <span class="detail-move-chip" @dblclick="openItemDetail(item)" x-text="item.name"></span>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div x-show="showDetailView != 'item'">
+        <div class="controls">
+          <input type="text" class="search-input" placeholder="Search items..." x-model="itemSearch" @input="itemRecompute()">
+
+          <div class="chip-bar">
+            <div class="add-chip-wrapper">
+              <button class="chip chip-add" @click="itemShowAddMenu = !itemShowAddMenu">+ Add Filter</button>
+              <div class="add-chip-menu" x-show="itemShowAddMenu" @click.outside="itemShowAddMenu = false">
+                <button @click="addItemChip('category'); itemShowAddMenu = false">Category</button>
+              </div>
+            </div>
+
+            <template x-for="(chip, i) in itemChips" :key="i">
+              <div class="chip" :class="'chip-' + chip.type" @click.stop>
+                <template x-if="!chip.editing">
+                  <span class="chip-text" @click="chip.editing = true" x-text="itemChipLabel(chip)"></span>
+                </template>
+                <template x-if="chip.editing">
+                  <div class="chip-edit">
+                    <template x-if="chip.type === 'category'">
+                      <select x-model="chip.value" @change="commitItemChip(chip)">
+                        <template x-for="cat in itemCategories" :key="cat">
+                          <option :value="cat" x-text="cat"></option>
+                        </template>
+                      </select>
+                    </template>
+                    <button class="chip-commit" @click="commitItemChip(chip)">✓</button>
+                  </div>
+                </template>
+                <button class="chip-remove" @click="removeItemChip(i)">&times;</button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="poke-table">
+            <thead>
+              <tr>
+                <th :class="{ sortable: true, sorted: itemSortKey === 'name' }" @click="toggleItemSort('name')">
+                  <span>Item</span>
+                  <span class="sort-arrow" x-show="itemSortKey === 'name'" x-text="itemSortDir === 'asc' ? '▲' : '▼'"></span>
+                </th>
+                <th :class="{ sortable: true, sorted: itemSortKey === 'category' }" @click="toggleItemSort('category')">
+                  <span>Category</span>
+                  <span class="sort-arrow" x-show="itemSortKey === 'category'" x-text="itemSortDir === 'asc' ? '▲' : '▼'"></span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="item in filteredItems" :key="item.name">
+                <tr @dblclick="openItemDetail(item)">
+                  <td class="col-name" style="text-transform:none;" x-text="item.name"></td>
+                  <td>
+                    <span class="item-cat-badge" :class="'item-cat-' + item.category.replace(/ /g, '-').toLowerCase()" x-text="item.category"></span>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <div class="no-results" x-show="filteredItems.length === 0 && items.length > 0">
+            No items match your filters.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div x-show="activeTab === 'collection'">
   <div class="home-section home-info tab-info">
     <div class="home-info-header">
@@ -1685,6 +1790,7 @@
       <span x-show="activeTab === 'pokemon'">Showing <strong x-text="filteredPokemon.length"></strong> of <strong x-text="pokemon.length"></strong> Pokémon</span>
       <span x-show="activeTab === 'moves'">Showing <strong x-text="filteredMoves.length"></strong> of <strong x-text="moves.length"></strong> Moves</span>
       <span x-show="activeTab === 'abilities'">Showing <strong x-text="filteredAbilities.length"></strong> of <strong x-text="abilities.length"></strong> Abilities</span>
+      <span x-show="activeTab === 'items'">Showing <strong x-text="filteredItems.length"></strong> of <strong x-text="items.length"></strong> Items</span>
       <span x-show="activeTab === 'games'">Pokémon Games</span>
       <span x-show="activeTab === 'types'">Type Calculator</span>
     </footer>
@@ -1694,6 +1800,7 @@
   <script src="abilities-data.js"></script>
   <script src="evolution-data.js"></script>
   <script src="facts-data.js"></script>
+  <script src="items-data.js"></script>
   <script src="app.js"></script>
   <script src="alpine.min.js"></script>
 </body>
