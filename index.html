@@ -190,6 +190,20 @@
               <div class="info-desc">Quickly calculate type effectiveness for any attacking move against one or two defending types.</div>
             </div>
           </div>
+          <div class="info-card" @dblclick="howToUseModalSection = 'collection'; showHowToUseModal = true">
+            <div class="info-icon">C</div>
+            <div class="info-body">
+              <div class="info-title">Collection</div>
+              <div class="info-desc">Search for Pokémon TCG cards and build your personal collection with PSA grading and estimated values.</div>
+            </div>
+          </div>
+          <div class="info-card" @dblclick="howToUseModalSection = 'items'; showHowToUseModal = true">
+            <div class="info-icon">I</div>
+            <div class="info-body">
+              <div class="info-title">Items</div>
+              <div class="info-desc">Browse held items and key items with search and category filters.</div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
@@ -1398,7 +1412,7 @@
         </div>
         <div x-show="showHowToUse">
           <div class="info-grid">
-            <div class="info-card"><div class="info-icon">I</div><div class="info-body"><div class="info-title">Items</div><div class="info-desc">Browse held items and key items with search and category filters.</div></div></div>
+            <div class="info-card" @dblclick="howToUseModalSection = 'items'; showHowToUseModal = true"><div class="info-icon">I</div><div class="info-body"><div class="info-title">Items</div><div class="info-desc">Browse held items and key items with search and category filters.</div></div></div>
           </div>
         </div>
       </div>
@@ -1473,6 +1487,7 @@
                   <span>Category</span>
                   <span class="sort-arrow" x-show="itemSortKey === 'category'" x-text="itemSortDir === 'asc' ? '▲' : '▼'"></span>
                 </th>
+                <th>Effect</th>
               </tr>
             </thead>
             <tbody>
@@ -1482,6 +1497,7 @@
                   <td>
                     <span class="item-cat-badge" :class="'item-cat-' + item.category.replace(/ /g, '-').toLowerCase()" x-text="item.category"></span>
                   </td>
+                  <td class="col-desc" x-text="item.desc || ''"></td>
                 </tr>
               </template>
             </tbody>
@@ -1501,7 +1517,7 @@
     </div>
     <div x-show="showHowToUse">
       <div class="info-grid">
-        <div class="info-card"><div class="info-icon">C</div><div class="info-body"><div class="info-title">Collection</div><div class="info-desc">Search for Pokémon TCG cards and build your personal collection with PSA grading and estimated values.</div></div></div>
+        <div class="info-card" @dblclick="howToUseModalSection = 'collection'; showHowToUseModal = true"><div class="info-icon">C</div><div class="info-body"><div class="info-title">Collection</div><div class="info-desc">Search for Pokémon TCG cards and build your personal collection with PSA grading and estimated values.</div></div></div>
       </div>
     </div>
   </div>
@@ -1725,7 +1741,7 @@
     <div x-show="showHowToUseModal" class="htu-overlay" @click.self="showHowToUseModal = false" @keydown.escape.window="showHowToUseModal = false">
       <div class="htu-modal">
         <button class="htu-close" @click="showHowToUseModal = false">×</button>
-        <h2 class="htu-title" x-text="'How to Use — ' + ({pokemon:'Pokémon Browser',moves:'Moves',abilities:'Abilities',team:'Team Builder',wallpaper:'Wallpaper Generator',speedrun:'Speedrun',games:'Games',types:'Type Calculator'}[howToUseModalSection] || '')"></h2>
+        <h2 class="htu-title" x-text="'How to Use — ' + ({pokemon:'Pokémon Browser',moves:'Moves',abilities:'Abilities',team:'Team Builder',wallpaper:'Wallpaper Generator',speedrun:'Speedrun',games:'Games',types:'Type Calculator',collection:'Collection',items:'Items'}[howToUseModalSection] || '')"></h2>
 
         <div class="htu-card" x-show="howToUseModalSection === 'pokemon'">
           <div class="htu-icon htu-icon-poke">P</div>
@@ -1781,6 +1797,20 @@
           <div class="htu-body">
             <div class="htu-card-title">Type Calculator</div>
             <div class="htu-card-desc">Quickly calculate type effectiveness for any attacking move against one or two defending types. Select the move type and target types from the clickable grid. The result shows the overall multiplier with a color-coded verdict and a per-type breakdown for dual-type targets.</div>
+          </div>
+        </div>
+        <div class="htu-card" x-show="howToUseModalSection === 'collection'">
+          <div class="htu-icon htu-icon-game">C</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Collection</div>
+            <div class="htu-card-desc">Search for Pokémon TCG cards using the PokéTCG API and build your personal collection with PSA grading and estimated values. Browse the Main view for random cards from recent sets, or switch to Collection view to see your owned cards. Cards are saved to your browser's local storage.</div>
+          </div>
+        </div>
+        <div class="htu-card" x-show="howToUseModalSection === 'items'">
+          <div class="htu-icon htu-icon-team">I</div>
+          <div class="htu-body">
+            <div class="htu-card-title">Items</div>
+            <div class="htu-card-desc">Browse all held items and key items from the Pokémon games. Search by name, filter by category (Berry, Choice, Type Boost, Evolution, Battle, Mega Stone, Misc), and double-click any item to see its full category listing. Each item shows a short description of its effect.</div>
           </div>
         </div>
       </div>
