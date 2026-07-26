@@ -378,7 +378,7 @@
                         <input type="number" x-model="chip.value" placeholder="0" min="0" max="255" @keyup.enter="commitChip(chip)">
                       </span>
                     </template>
-                    <template x-if="chip.type === 'move' || chip.type === 'type'">
+                    <template x-if="chip.type === 'move'">
                       <span class="autocomplete-wrapper">
                         <input type="text" x-model="chip.value"
                                placeholder="Type to search..."
@@ -392,6 +392,23 @@
                                  x-text="capitalize(s)"></div>
                           </template>
                         </div>
+                      </span>
+                    </template>
+                    <template x-if="chip.type === 'type'">
+                      <span class="chip-edit-row">
+                        <select x-model="chip.value" @change="commitChip(chip)">
+                          <option value="">Type 1</option>
+                          <template x-for="t in allTypes" :key="t">
+                            <option :value="t" x-text="capitalize(t)"></option>
+                          </template>
+                        </select>
+                        <span class="chip-edit-sep">+</span>
+                        <select x-model="chip.value2" @change="commitChip(chip)">
+                          <option value="">(None)</option>
+                          <template x-for="t in allTypes" :key="t">
+                            <option :value="t" x-text="capitalize(t)"></option>
+                          </template>
+                        </select>
                       </span>
                     </template>
                     <template x-if="chip.type === 'total'">
@@ -540,6 +557,9 @@
                 <button @click="addMoveChip('learners'); moveShowAddMenu = false">Min Learners</button>
                 <button @click="addMoveChip('pokemon'); moveShowAddMenu = false">Learned By</button>
                 <button @click="addMoveChip('category'); moveShowAddMenu = false">Category</button>
+                <button @click="addMoveChip('power'); moveShowAddMenu = false">Power</button>
+                <button @click="addMoveChip('pp'); moveShowAddMenu = false">PP</button>
+                <button @click="addMoveChip('accuracy'); moveShowAddMenu = false">Accuracy</button>
               </div>
             </div>
 
@@ -577,6 +597,15 @@
                                  x-text="capitalize(s)"></div>
                           </template>
                         </div>
+                      </span>
+                    </template>
+                    <template x-if="chip.type === 'power' || chip.type === 'pp' || chip.type === 'accuracy'">
+                      <span class="chip-edit-row">
+                        <select x-model="chip.operator">
+                          <option value=">">≥</option>
+                          <option value="<">≤</option>
+                        </select>
+                        <input type="number" x-model="chip.value" placeholder="0" min="0" @keyup.enter="commitMoveChip(chip)">
                       </span>
                     </template>
                     <button class="chip-commit" @click="commitMoveChip(chip)">✓</button>

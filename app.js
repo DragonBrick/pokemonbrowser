@@ -312,8 +312,11 @@ document.addEventListener('alpine:init', () => {
           }));
         } else if (type === 'type') {
           result = result.filter((p) => chips.some((c) => {
-            const t = (c.value || '').toLowerCase().trim();
-            return t && p.types.includes(t);
+            const t1 = (c.value || '').toLowerCase().trim();
+            const t2 = (c.value2 || '').toLowerCase().trim();
+            if (!t1) return false;
+            if (!t2) return p.types.includes(t1);
+            return p.types.includes(t1) && p.types.includes(t2);
           }));
         } else if (type === 'total') {
           result = result.filter((p) => chips.some((c) => {
@@ -385,6 +388,7 @@ document.addEventListener('alpine:init', () => {
         chip.showDropdown = false;
       } else if (type === 'type') {
         chip.value = '';
+        chip.value2 = '';
         chip.suggestions = [];
         chip.showDropdown = false;
       } else if (type === 'total') {
@@ -413,7 +417,11 @@ document.addEventListener('alpine:init', () => {
       if (chip.type === 'generation') return `Gen ${chip.value}`;
       if (chip.type === 'stat') return `${this.statLabel(chip.stat)} ${chip.operator} ${chip.value || '?'}`;
       if (chip.type === 'move') return `Can learn ${chip.value || '...'}`;
-      if (chip.type === 'type') return `Type: ${this.capitalize(chip.value) || '...'}`;
+      if (chip.type === 'type') {
+        let label = `Type: ${this.capitalize(chip.value) || '...'}`;
+        if (chip.value2) label += ` + ${this.capitalize(chip.value2)}`;
+        return label;
+      }
       if (chip.type === 'total') return `Total ${chip.operator} ${chip.value || '?'}`;
       if (chip.type === 'stage') return `Stage ${chip.value}`;
       if (chip.type === 'evolved') return 'Fully Evolved';
@@ -542,6 +550,21 @@ document.addEventListener('alpine:init', () => {
           result = result.filter((m) => q && m.pokemon.some((p) => p.includes(q)));
         } else if (type === 'category') {
           result = result.filter((m) => m.damage_class === chips[0].value);
+        } else if (type === 'power') {
+          const val = parseInt(chips[0].value);
+          if (!isNaN(val)) {
+            result = result.filter((m) => m.power != null && (chips[0].operator === '>' ? m.power >= val : m.power <= val));
+          }
+        } else if (type === 'pp') {
+          const val = parseInt(chips[0].value);
+          if (!isNaN(val)) {
+            result = result.filter((m) => m.pp != null && (chips[0].operator === '>' ? m.pp >= val : m.pp <= val));
+          }
+        } else if (type === 'accuracy') {
+          const val = parseInt(chips[0].value);
+          if (!isNaN(val)) {
+            result = result.filter((m) => m.accuracy != null && (chips[0].operator === '>' ? m.accuracy >= val : m.accuracy <= val));
+          }
         }
       }
       const key = this.moveSortKey;
@@ -582,6 +605,9 @@ document.addEventListener('alpine:init', () => {
         chip.value = '';
         chip.suggestions = [];
         chip.showDropdown = false;
+      } else if (type === 'power' || type === 'pp' || type === 'accuracy') {
+        chip.operator = '>';
+        chip.value = '';
       }
       this.moveChips.push(chip);
       if (!chip.editing) this.moveRecompute();
@@ -602,6 +628,9 @@ document.addEventListener('alpine:init', () => {
       if (chip.type === 'learners') return `≥ ${chip.value} learners`;
       if (chip.type === 'pokemon') return `Learned by ${this.capitalize(chip.value) || '...'}`;
       if (chip.type === 'category') return `Category: ${this.capitalize(chip.value)}`;
+      if (chip.type === 'power') return `Power ${chip.operator === '>' ? '≥' : '≤'} ${chip.value || '?'}`;
+      if (chip.type === 'pp') return `PP ${chip.operator === '>' ? '≥' : '≤'} ${chip.value || '?'}`;
+      if (chip.type === 'accuracy') return `Accuracy ${chip.operator === '>' ? '≥' : '≤'} ${chip.value || '?'}`;
       return '';
     },
 

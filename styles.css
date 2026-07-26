@@ -99,6 +99,9 @@ body {
 .chip-learners { border-color: var(--chip-stat); }
 .chip-pokemon { border-color: var(--chip-gen); }
 .chip-category { border-color: #f97316; }
+.chip-power { border-color: #ef4444; }
+.chip-pp { border-color: #3b82f6; }
+.chip-accuracy { border-color: #22c55e; }
 .chip-text { cursor: pointer; }
 .chip-remove {
   background: none; border: none; color: var(--text-dim);
