@@ -1406,13 +1406,14 @@
         </div>
         <div x-show="showHowToUse">
           <div class="info-grid">
-            <div class="info-card" @dblclick="howToUseModalSection = 'types'; showHowToUseModal = true"><div class="info-icon">E</div><div class="info-body"><div class="info-title">Tools</div><div class="info-desc">Type calculator and entity comparer.</div></div></div>
+            <div class="info-card" @dblclick="howToUseModalSection = 'types'; showHowToUseModal = true"><div class="info-icon">E</div><div class="info-body"><div class="info-title">Tools</div><div class="info-desc">Type calculator, entity comparer, and useful links.</div></div></div>
           </div>
         </div>
       </div>
       <div class="gm-subtabs">
         <button class="gm-chooser-btn" :class="{ active: toolSubTab === 'types' }" @click="toolSubTab = 'types'">Type Calculator</button>
         <button class="gm-chooser-btn" :class="{ active: toolSubTab === 'comparer' }" @click="toolSubTab = 'comparer'">Comparer</button>
+        <button class="gm-chooser-btn" :class="{ active: toolSubTab === 'links' }" @click="toolSubTab = 'links'">Links</button>
       </div>
       <div class="tc-page" x-show="toolSubTab === 'types'">
         <h2 class="tc-title">Type Effectiveness Calculator</h2>
@@ -1582,6 +1583,42 @@
                   <div class="cmp-hex-total">Total <strong x-text="statTotal(slot.entity)"></strong></div>
                 </div>
               </template>
+            </div>
+          </template>
+        </div>
+      </div>
+      <div class="links-page" x-show="toolSubTab === 'links'">
+        <div class="links-section">
+          <h3 class="links-title">Your Links</h3>
+          <div class="links-add">
+            <input type="text" class="search-input" placeholder="Name..." x-model="newLinkName" @keyup.enter="addUserLink()">
+            <input type="text" class="search-input" placeholder="https://..." x-model="newLinkUrl" @keyup.enter="addUserLink()">
+            <button class="btn btn-sm" @click="addUserLink()">Add</button>
+          </div>
+          <div class="links-list" x-show="userLinks.length">
+            <template x-for="(l, i) in userLinks" :key="'u' + i">
+              <div class="links-item">
+                <a :href="l.url" target="_blank" rel="noopener" x-text="l.name"></a>
+                <button class="links-remove" @click="removeUserLink(i)">&times;</button>
+              </div>
+            </template>
+          </div>
+          <div class="text-dim" x-show="!userLinks.length">No saved links yet — add one above.</div>
+        </div>
+
+        <div class="links-section">
+          <h3 class="links-title">Default Links</h3>
+          <div class="text-dim" x-show="linksError">Couldn't load links.</div>
+          <template x-for="g in linksByCategory" :key="g.category">
+            <div class="links-cat">
+              <div class="links-cat-title" x-text="g.category"></div>
+              <div class="links-list">
+                <template x-for="l in g.links" :key="l.name">
+                  <div class="links-item">
+                    <a :href="l.url" target="_blank" rel="noopener" x-text="l.name"></a>
+                  </div>
+                </template>
+              </div>
             </div>
           </template>
         </div>
@@ -1931,14 +1968,14 @@
           <div class="htu-icon htu-icon-poke">P</div>
           <div class="htu-body">
             <div class="htu-card-title">Pokémon Browser</div>
-            <div class="htu-card-desc">Browse all Pokémon with sortable columns, stat totals, and type badges. Double-click a row to open the detail panel showing stats, evolution chains (with sprites and clickable nodes), and a full move list. Use the search bar to find Pokémon by name, and add filters for generation, type, stat range, total range, moves, and abilities. Resize columns by dragging their right edge.</div>
+            <div class="htu-card-desc">Browse all Pokémon with sortable columns, stat totals, and type badges. Double-click a row to open the detail panel showing stats, evolution chains (with sprites and clickable nodes), and a full move list. Use the search bar to find Pokémon by name, and add filters for generation, type, stat range, total range, moves, and evolution stage. Resize columns by dragging their right edge.</div>
           </div>
         </div>
         <div class="htu-card" x-show="howToUseModalSection === 'moves'">
           <div class="htu-icon htu-icon-move">M</div>
           <div class="htu-body">
             <div class="htu-card-title">Moves</div>
-            <div class="htu-card-desc">Search and filter moves by name, type, category, min learners, or which Pokémon learn them. Columns show power, accuracy, PP, damage class, and description. Double-click a move chip in any filter to jump to its detail view, where you can see all Pokémon that learn it and filter that list.</div>
+            <div class="htu-card-desc">Search and filter moves by name, type, category, min learners, priority, or which Pokémon learn them. Columns show power, accuracy, PP, priority, damage class, and description. Double-click a move chip in any filter to jump to its detail view, where you can see all Pokémon that learn it and filter that list.</div>
           </div>
         </div>
         <div class="htu-card" x-show="howToUseModalSection === 'abilities'">
@@ -1973,14 +2010,14 @@
           <div class="htu-icon htu-icon-game">G</div>
           <div class="htu-body">
             <div class="htu-card-title">Games</div>
-            <div class="htu-card-desc">Play Who's That Pokémon (guess the Pokémon from its silhouette) or Pokedle (deduce the Pokémon by guessing and checking type, generation, height, and weight feedback). Both support daily and endless modes. Scores persist during your session.</div>
+            <div class="htu-card-desc">Play Who's That Pokémon (guess the Pokémon from its silhouette) or Pokedle (deduce the Pokémon by guessing and checking type, generation, height, and weight feedback). Both support daily and endless modes. Use the Checklist tab to track your progress through the mainline games. Scores persist during your session.</div>
           </div>
         </div>
         <div class="htu-card" x-show="howToUseModalSection === 'types'">
           <div class="htu-icon htu-icon-type">E</div>
           <div class="htu-body">
-            <div class="htu-card-title">Type Calculator</div>
-            <div class="htu-card-desc">Quickly calculate type effectiveness for any attacking move against one or two defending types. Select the move type and target types from the clickable grid. The result shows the overall multiplier with a color-coded verdict and a per-type breakdown for dual-type targets.</div>
+            <div class="htu-card-title">Tools</div>
+            <div class="htu-card-desc">Three tools in one tab. Type Calculator: pick a move type and one or two target types to see the effectiveness multiplier. Comparer: compare up to 5 Pokémon, Moves, or Items side-by-side — Pokémon comparisons can switch between Table and Hexagon views, and double-click any row to open its detail. Links: browse useful sites and keep your own saved links.</div>
           </div>
         </div>
         <div class="htu-card" x-show="howToUseModalSection === 'collection'">
