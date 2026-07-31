@@ -193,6 +193,8 @@ document.addEventListener('alpine:init', () => {
     })(),
 
     toolSubTab: 'types',
+    cmpKind: 'pokemon',
+    cmpSlots: [{ search: '', results: [], entity: null }],
 
     // === Items State ===
     items: [],
@@ -1556,6 +1558,115 @@ document.addEventListener('alpine:init', () => {
           try { localStorage.removeItem('pokemon_' + game[0]); } catch (e) {}
         });
       });
+    },
+
+    cmpFields(kind) {
+      if (kind === 'pokemon') {
+        return [
+          { key: 'sprite', label: '', numeric: false },
+          { key: 'name', label: 'Name', numeric: false },
+          { key: 'types', label: 'Types', numeric: false },
+          { key: 'hp', label: 'HP', numeric: true },
+          { key: 'attack', label: 'Attack', numeric: true },
+          { key: 'defense', label: 'Defense', numeric: true },
+          { key: 'special-attack', label: 'Sp.Atk', numeric: true },
+          { key: 'special-defense', label: 'Sp.Def', numeric: true },
+          { key: 'speed', label: 'Speed', numeric: true },
+          { key: 'total', label: 'Total', numeric: true },
+        ];
+      }
+      if (kind === 'moves') {
+        return [
+          { key: 'name', label: 'Move', numeric: false },
+          { key: 'type', label: 'Type', numeric: false },
+          { key: 'damage_class', label: 'Category', numeric: false },
+          { key: 'power', label: 'Power', numeric: true },
+          { key: 'accuracy', label: 'Acc', numeric: true },
+          { key: 'pp', label: 'PP', numeric: true },
+          { key: 'priority', label: 'Priority', numeric: true },
+        ];
+      }
+      return [
+        { key: 'name', label: 'Item', numeric: false },
+        { key: 'category', label: 'Category', numeric: false },
+        { key: 'desc', label: 'Description', numeric: false },
+      ];
+    },
+
+    cmpValue(kind, entity, key) {
+      if (!entity) return null;
+      if (kind === 'pokemon') {
+        if (key === 'total') return this.statTotal(entity);
+        return entity.stats ? entity.stats[key] : null;
+      }
+      return entity[key];
+    },
+
+    cmpDisplay(kind, entity, key) {
+      const v = this.cmpValue(kind, entity, key);
+      if (v == null) return '—';
+      if (key === 'priority') return this.signed(v);
+      return v;
+    },
+
+    cmpBest(kind, key) {
+      let best = -Infinity;
+      this.cmpSlots.forEach((s) => {
+        if (!s.entity) return;
+        const v = this.cmpValue(kind, s.entity, key);
+        if (typeof v === 'number' && v > best) best = v;
+      });
+      return best === -Infinity ? null : best;
+    },
+
+    cmpIsBest(kind, entity, key) {
+      const v = this.cmpValue(kind, entity, key);
+      if (typeof v !== 'number') return false;
+      return v === this.cmpBest(kind, key);
+    },
+
+    cmpLabel(kind, entity) {
+      if (!entity) return '';
+      if (kind === 'pokemon') return '#' + entity.id + ' ' + this.capitalize(entity.name.replace(/-/g, ' '));
+      return this.capitalize(entity.name.replace(/-/g, ' '));
+    },
+
+    cmpFilterInput(slot) {
+      const q = (slot.search || '').toLowerCase().trim();
+      if (!q) { slot.results = []; return; }
+      if (this.cmpKind === 'pokemon') {
+        slot.results = this.pokemon
+          .filter((p) => !p.name.includes('-mega') && !p.name.includes('-gmax') && !p.name.includes('-totem'))
+          .filter((p) => p.name.replace(/-/g, ' ').toLowerCase().startsWith(q))
+          .slice(0, 8);
+      } else if (this.cmpKind === 'moves') {
+        slot.results = this.moves
+          .filter((m) => m.name.replace(/-/g, ' ').toLowerCase().startsWith(q))
+          .slice(0, 8);
+      } else {
+        slot.results = this.items
+          .filter((i) => i.name.toLowerCase().startsWith(q))
+          .slice(0, 8);
+      }
+    },
+
+    cmpSelect(slot, entity) {
+      slot.entity = entity;
+      slot.search = '';
+      slot.results = [];
+    },
+
+    cmpRemove(i) {
+      if (this.cmpSlots.length <= 1) return;
+      this.cmpSlots.splice(i, 1);
+    },
+
+    cmpAddSlot() {
+      if (this.cmpSlots.length < 5) this.cmpSlots.push({ search: '', results: [], entity: null });
+    },
+
+    cmpResetSlots() {
+      this.cmpSlots = this.cmpSlots.map(() => ({ search: '', results: [], entity: null }));
     },
 
     // === Items Methods ===
