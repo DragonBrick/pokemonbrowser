@@ -1182,6 +1182,27 @@ body {
 
 .gm-message { text-align: center; padding: 8px; margin-top: 12px; color: var(--text-dim); font-size: 0.9rem; }
 
+.gm-subtabs { display: flex; gap: 6px; margin-bottom: 16px; }
+
+.cl-page { padding: 16px 0; }
+.cl-progress { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); }
+.cl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.cl-gen { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.cl-gen-title { margin: 0; background: var(--surface2); padding: 6px 10px; font-size: 0.9rem; border-bottom: 1px solid var(--border); }
+.cl-game { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.cl-game:last-child { border-bottom: none; }
+.cl-game label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.cl-name { font-weight: 600; }
+.cl-duplicate { margin-left: 22px; font-size: 0.75rem; color: var(--text-dim); }
+.cl-done { opacity: 0.45; }
+
+@media (max-width: 1000px) {
+  .cl-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px) {
+  .cl-grid { grid-template-columns: 1fr; }
+}
+
 .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
 .btn-active { background: var(--accent); color: #fff; }
 .btn-secondary { background: var(--surface2); }
