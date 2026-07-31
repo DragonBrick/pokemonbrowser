@@ -532,6 +532,10 @@ document.addEventListener('alpine:init', () => {
       return Object.values(p.stats).reduce((sum, v) => sum + v, 0);
     },
 
+    signed(n) {
+      return n > 0 ? '+' + n : String(n);
+    },
+
     computeMoves() {
       const dataMap = {};
       if (window.__MOVES_DATA__) {
@@ -550,6 +554,7 @@ document.addEventListener('alpine:init', () => {
               pp: entry.pp ?? null,
               damage_class: entry.damage_class || null,
               description: entry.description || null,
+              priority: (window.__MOVES_PRIORITY__ || {})[m] ?? 0,
             };
           }
           map[m].learners++;
