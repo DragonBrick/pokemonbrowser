@@ -1463,6 +1463,83 @@
           </div>
         </div>
       </div>
+      <div class="cmp-page" x-show="toolSubTab === 'comparer'">
+        <div class="cmp-kinds">
+          <button class="cmp-kind-btn" :class="{ active: cmpKind === 'pokemon' }" @click="cmpKind = 'pokemon'; cmpResetSlots()">Pokémon</button>
+          <button class="cmp-kind-btn" :class="{ active: cmpKind === 'moves' }" @click="cmpKind = 'moves'; cmpResetSlots()">Moves</button>
+          <button class="cmp-kind-btn" :class="{ active: cmpKind === 'items' }" @click="cmpKind = 'items'; cmpResetSlots()">Items</button>
+        </div>
+
+        <div class="cmp-slots">
+          <template x-for="(slot, i) in cmpSlots" :key="i">
+            <div class="cmp-slot">
+              <div class="cmp-slot-search">
+                <input type="text" class="search-input" :placeholder="'Search ' + (cmpKind === 'pokemon' ? 'a Pokémon' : cmpKind === 'moves' ? 'a move' : 'an item') + '...'" x-model="slot.search" @input="cmpFilterInput(slot)">
+                <div class="autocomplete-dropdown" x-show="slot.results.length">
+                  <template x-for="r in slot.results" :key="cmpKind + '-' + (r.id || r.name)">
+                    <div class="autocomplete-item" @mousedown="cmpSelect(slot, r)">
+                      <img x-show="cmpKind === 'pokemon'" :src="spriteUrl(r.id)" class="autocomplete-sprite">
+                      <span x-text="cmpLabel(cmpKind, r)"></span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+              <button class="cmp-slot-remove" x-show="slot.entity" @click="cmpRemove(i)">&times;</button>
+            </div>
+          </template>
+          <button class="btn btn-sm" @click="cmpAddSlot()" x-show="cmpSlots.length < 5">+ Add Slot</button>
+        </div>
+
+        <div class="table-wrapper" x-show="cmpSlots.some(s => s.entity)">
+          <table class="poke-table cmp-table">
+            <thead>
+              <tr>
+                <template x-for="f in cmpFields(cmpKind)" :key="f.key">
+                  <th x-text="f.label"></th>
+                </template>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="(slot, i) in cmpSlots" :key="i">
+                <tr x-show="slot.entity">
+                  <template x-for="f in cmpFields(cmpKind)" :key="f.key">
+                    <td>
+                      <template x-if="f.key === 'sprite'">
+                        <img :src="spriteUrl(slot.entity.id)" class="cmp-sprite" width="48" height="48">
+                      </template>
+                      <template x-if="f.key === 'name'">
+                        <span x-text="cmpLabel(cmpKind, slot.entity)"></span>
+                      </template>
+                      <template x-if="f.key === 'types'">
+                        <span class="detail-types cmp-type-row">
+                          <template x-for="t in slot.entity.types" :key="t">
+                            <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                          </template>
+                        </span>
+                      </template>
+                      <template x-if="f.key === 'type'">
+                        <span class="type-badge" :class="'type-' + slot.entity.type" x-show="slot.entity.type" x-text="capitalize(slot.entity.type)"></span>
+                      </template>
+                      <template x-if="f.key === 'damage_class'">
+                        <span class="category-badge" :class="'category-' + slot.entity.damage_class" x-show="slot.entity.damage_class" x-text="capitalize(slot.entity.damage_class)"></span>
+                      </template>
+                      <template x-if="f.key === 'category'">
+                        <span class="item-cat-badge" :class="'item-cat-' + slot.entity.category.replace(/ /g, '-').toLowerCase()" x-text="slot.entity.category"></span>
+                      </template>
+                      <template x-if="f.key === 'desc'">
+                        <span class="col-desc" x-text="slot.entity.desc || '—'"></span>
+                      </template>
+                      <template x-if="f.numeric">
+                        <span :class="{ 'cmp-best': cmpIsBest(cmpKind, slot.entity, f.key) }" x-text="cmpDisplay(cmpKind, slot.entity, f.key)"></span>
+                      </template>
+                    </td>
+                  </template>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <div x-show="activeTab === 'items'">
