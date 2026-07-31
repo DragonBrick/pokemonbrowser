@@ -22,7 +22,7 @@
           <button :class="{ active: activeTab === 'games' }" @click="switchTab('games')" @dblclick="closeDetail()" x-show="pokemon.length">Games</button>
           <button :class="{ active: activeTab === 'collection' }" @click="switchTab('collection')" @dblclick="closeDetail()">Collection</button>
           <button :class="{ active: activeTab === 'items' }" @click="switchTab('items')" @dblclick="closeDetail()">Items</button>
-          <button :class="{ active: activeTab === 'types' }" @click="switchTab('types')" @dblclick="closeDetail()">Types</button>
+          <button :class="{ active: activeTab === 'types' }" @click="switchTab('types')" @dblclick="closeDetail()">Tools</button>
         </nav>
       </div>
       <div class="header-actions">
@@ -1406,11 +1406,15 @@
         </div>
         <div x-show="showHowToUse">
           <div class="info-grid">
-            <div class="info-card" @dblclick="howToUseModalSection = 'types'; showHowToUseModal = true"><div class="info-icon">E</div><div class="info-body"><div class="info-title">Type Calculator</div><div class="info-desc">Calculate type effectiveness.</div></div></div>
+            <div class="info-card" @dblclick="howToUseModalSection = 'types'; showHowToUseModal = true"><div class="info-icon">E</div><div class="info-body"><div class="info-title">Tools</div><div class="info-desc">Type calculator and entity comparer.</div></div></div>
           </div>
         </div>
       </div>
-      <div class="tc-page">
+      <div class="gm-subtabs">
+        <button class="gm-chooser-btn" :class="{ active: toolSubTab === 'types' }" @click="toolSubTab = 'types'">Type Calculator</button>
+        <button class="gm-chooser-btn" :class="{ active: toolSubTab === 'comparer' }" @click="toolSubTab = 'comparer'">Comparer</button>
+      </div>
+      <div class="tc-page" x-show="toolSubTab === 'types'">
         <h2 class="tc-title">Type Effectiveness Calculator</h2>
 
         <div class="tc-section">
@@ -1798,7 +1802,7 @@
     <div x-show="showHowToUseModal" class="htu-overlay" @click.self="showHowToUseModal = false" @keydown.escape.window="showHowToUseModal = false">
       <div class="htu-modal">
         <button class="htu-close" @click="showHowToUseModal = false">×</button>
-        <h2 class="htu-title" x-text="'How to Use — ' + ({pokemon:'Pokémon Browser',moves:'Moves',abilities:'Abilities',team:'Team Builder',wallpaper:'Wallpaper Generator',speedrun:'Speedrun',games:'Games',types:'Type Calculator',collection:'Collection',items:'Items'}[howToUseModalSection] || '')"></h2>
+        <h2 class="htu-title" x-text="'How to Use — ' + ({pokemon:'Pokémon Browser',moves:'Moves',abilities:'Abilities',team:'Team Builder',wallpaper:'Wallpaper Generator',speedrun:'Speedrun',games:'Games',types:'Tools',collection:'Collection',items:'Items'}[howToUseModalSection] || '')"></h2>
 
         <div class="htu-card" x-show="howToUseModalSection === 'pokemon'">
           <div class="htu-icon htu-icon-poke">P</div>

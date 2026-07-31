@@ -192,6 +192,8 @@ document.addEventListener('alpine:init', () => {
       return state;
     })(),
 
+    toolSubTab: 'types',
+
     // === Items State ===
     items: [],
     itemSearch: '',
