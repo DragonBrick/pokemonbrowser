@@ -159,6 +159,39 @@ document.addEventListener('alpine:init', () => {
     gmPokedleFiltered: [],
     gmScore: 0,
 
+    gmSubTab: 'games',
+
+    checklistGens: [
+      { title: 'Generation I', games: [['Red', 'Blue'], ['Yellow', null]] },
+      { title: 'Generation II', games: [['Gold', 'Silver'], ['Crystal', null]] },
+      { title: 'Generation III', games: [['Ruby', 'Sapphire'], ['Emerald', null], ['FireRed', 'LeafGreen']] },
+      { title: 'Generation IV', games: [['Diamond', 'Pearl'], ['Platinum', null], ['HeartGold', 'SoulSilver']] },
+      { title: 'Generation V', games: [['Black', 'White'], ['Black 2', 'White 2']] },
+      { title: 'Generation VI', games: [['X', 'Y'], ['Omega Ruby', 'Alpha Sapphire']] },
+      { title: 'Generation VII', games: [['Sun', 'Moon'], ['Ultra Sun', 'Ultra Moon'], ["Let's Go Pikachu", "Let's Go Eevee"]] },
+      { title: 'Generation VIII', games: [['Sword', 'Shield'], ['Brilliant Diamond', 'Shining Pearl'], ['Legends: Arceus', null]] },
+      { title: 'Generation IX', games: [['Scarlet', 'Violet'], ['Legends: Z-A', null]] },
+    ],
+
+    checklistState: (() => {
+      const names = [
+        'Red', 'Blue', 'Yellow',
+        'Gold', 'Silver', 'Crystal',
+        'Ruby', 'Sapphire', 'Emerald', 'FireRed', 'LeafGreen',
+        'Diamond', 'Pearl', 'Platinum', 'HeartGold', 'SoulSilver',
+        'Black', 'White', 'Black 2', 'White 2',
+        'X', 'Y', 'Omega Ruby', 'Alpha Sapphire',
+        'Sun', 'Moon', 'Ultra Sun', 'Ultra Moon', "Let's Go Pikachu", "Let's Go Eevee",
+        'Sword', 'Shield', 'Brilliant Diamond', 'Shining Pearl', 'Legends: Arceus',
+        'Scarlet', 'Violet', 'Legends: Z-A',
+      ];
+      const state = {};
+      names.forEach(n => {
+        try { state[n] = localStorage.getItem('pokemon_' + n) === 'true'; } catch (e) { state[n] = false; }
+      });
+      return state;
+    })(),
+
     // === Items State ===
     items: [],
     itemSearch: '',
@@ -1478,6 +1511,37 @@ document.addEventListener('alpine:init', () => {
         this.gmRevealed = true;
         this.gmMessage = 'Out of guesses! It was ' + this.capitalize(target.name.replace(/-/g, ' ')) + '.';
       }
+    },
+
+    checklistDone(name) {
+      return !!this.checklistState[name];
+    },
+
+    checklistToggle(name, checked) {
+      this.checklistState[name] = checked;
+      try { localStorage.setItem('pokemon_' + name, checked); } catch (e) {}
+    },
+
+    checklistProgress() {
+      let completed = 0;
+      let total = 0;
+      this.checklistGens.forEach(g => {
+        g.games.forEach(game => {
+          total++;
+          if (this.checklistDone(game[0])) completed++;
+        });
+      });
+      return completed + ' / ' + total + ' Games Completed';
+    },
+
+    checklistReset() {
+      if (!confirm('Reset all progress?')) return;
+      this.checklistState = {};
+      this.checklistGens.forEach(g => {
+        g.games.forEach(game => {
+          try { localStorage.removeItem('pokemon_' + game[0]); } catch (e) {}
+        });
+      });
     },
 
     // === Items Methods ===
