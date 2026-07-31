@@ -1184,6 +1184,22 @@ body {
 
 .gm-subtabs { display: flex; gap: 6px; margin-bottom: 16px; }
 
+.cmp-page { padding: 16px 0; }
+.cmp-kinds { display: flex; gap: 6px; margin-bottom: 16px; }
+.cmp-kind-btn { padding: 8px 16px; font-size: 0.9rem; font-weight: 600; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text); cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.cmp-kind-btn:hover { background: var(--surface3); border-color: var(--accent); }
+.cmp-kind-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cmp-slots { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.cmp-slot { display: flex; align-items: center; gap: 8px; max-width: 420px; }
+.cmp-slot-search { flex: 1; position: relative; }
+.cmp-slot-remove { background: none; border: none; color: var(--text-dim); font-size: 1.1rem; cursor: pointer; padding: 4px 8px; }
+.cmp-slot-remove:hover { color: var(--accent); }
+.cmp-table th, .cmp-table td { text-align: center; }
+.cmp-table td { vertical-align: middle; }
+.cmp-sprite { object-fit: contain; vertical-align: middle; }
+.cmp-type-row { margin-bottom: 0; }
+.cmp-best { color: var(--accent); font-weight: 700; }
+
 .cl-page { padding: 16px 0; }
 .cl-progress { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); }
 .cl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
