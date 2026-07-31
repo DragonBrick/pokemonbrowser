@@ -1199,6 +1199,21 @@ body {
 .cmp-sprite { object-fit: contain; vertical-align: middle; }
 .cmp-type-row { margin-bottom: 0; }
 .cmp-best { color: var(--accent); font-weight: 700; }
+.cmp-toggle { display: flex; gap: 6px; margin-bottom: 16px; }
+.cmp-hex-row { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+.cmp-hex-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; min-width: 220px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.cmp-hex-card:hover { background: var(--surface3); border-color: var(--accent); }
+.cmp-hex-empty { opacity: 0.5; cursor: default; }
+.cmp-hex-placeholder { padding: 60px 0; color: var(--text-dim); }
+.cmp-hex-head { display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 8px; }
+.cmp-hex-sprite { object-fit: contain; }
+.cmp-hex-name { font-weight: 600; }
+.cmp-hex-types { display: flex; gap: 6px; justify-content: center; margin: 10px 0 6px; }
+.cmp-hex-abilities { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 6px; }
+.cmp-hex-ability { font-size: 0.8rem; color: var(--text-dim); }
+.cmp-hex-total { font-size: 0.9rem; }
+.cmp-hex-axis { font-size: 0.65rem; fill: var(--text-dim); }
+.cmp-hex-card text.cmp-best { fill: var(--accent); }
 
 .cl-page { padding: 16px 0; }
 .cl-progress { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); }
