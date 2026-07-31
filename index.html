@@ -1470,6 +1470,11 @@
           <button class="cmp-kind-btn" :class="{ active: cmpKind === 'items' }" @click="cmpKind = 'items'; cmpResetSlots()">Items</button>
         </div>
 
+        <div class="cmp-toggle" x-show="cmpKind === 'pokemon'">
+          <button class="cmp-kind-btn" :class="{ active: !cmpHexView }" @click="cmpHexView = false">Table</button>
+          <button class="cmp-kind-btn" :class="{ active: cmpHexView }" @click="cmpHexView = true">Hexagon</button>
+        </div>
+
         <div class="cmp-slots">
           <template x-for="(slot, i) in cmpSlots" :key="i">
             <div class="cmp-slot">
@@ -1490,7 +1495,7 @@
           <button class="btn btn-sm" @click="cmpAddSlot()" x-show="cmpSlots.length < 5">+ Add Slot</button>
         </div>
 
-        <div class="table-wrapper" x-show="cmpSlots.some(s => s.entity)">
+        <div class="table-wrapper" x-show="cmpSlots.some(s => s.entity) && !(cmpKind === 'pokemon' && cmpHexView)">
           <table class="poke-table cmp-table">
             <thead>
               <tr>
@@ -1501,14 +1506,12 @@
             </thead>
             <tbody>
               <template x-for="(slot, i) in cmpSlots" :key="i">
-                <tr x-show="slot.entity">
+                <tr x-show="slot.entity" @dblclick="cmpOpenDetail(slot)">
                   <template x-for="f in cmpFields(cmpKind)" :key="f.key">
                     <td>
+                      <span x-show="f.key === 'name'" x-text="cmpLabel(cmpKind, slot.entity)"></span>
                       <template x-if="f.key === 'sprite'">
                         <img :src="spriteUrl(slot.entity.id)" class="cmp-sprite" width="48" height="48">
-                      </template>
-                      <template x-if="f.key === 'name'">
-                        <span x-text="cmpLabel(cmpKind, slot.entity)"></span>
                       </template>
                       <template x-if="f.key === 'types'">
                         <span class="detail-types cmp-type-row">
@@ -1538,6 +1541,49 @@
               </template>
             </tbody>
           </table>
+        </div>
+        <div class="cmp-hex-row" x-show="cmpKind === 'pokemon' && cmpHexView">
+          <template x-for="(slot, i) in cmpSlots" :key="'hex' + i">
+            <div class="cmp-hex-card" :class="{ 'cmp-hex-empty': !slot.entity }" @dblclick="cmpOpenDetail(slot)">
+              <template x-if="!slot.entity">
+                <div class="cmp-hex-placeholder">Empty slot</div>
+              </template>
+              <template x-if="slot.entity">
+                <div>
+                  <div class="cmp-hex-head">
+                    <img :src="spriteUrl(slot.entity.id)" class="cmp-hex-sprite" width="56" height="56">
+                    <span class="cmp-hex-name" x-text="cmpLabel('pokemon', slot.entity)"></span>
+                  </div>
+                  <svg viewBox="0 0 200 190" width="200" height="190" role="img">
+                    <template x-for="(g, gi) in cmpHexGrid()" :key="'g' + gi">
+                      <polygon :points="g" fill="none" stroke="var(--border)" stroke-width="1" />
+                    </template>
+                    <template x-for="a in cmpHexAxes()" :key="'ax' + a.key">
+                      <line :x1="100" :y1="90" :x2="a.x" :y2="a.y" stroke="var(--border)" stroke-width="1" />
+                    </template>
+                    <polygon :points="cmpHexPoints(slot.entity)" :fill="typeColor(slot.entity.types[0])" fill-opacity="0.35" :stroke="typeColor(slot.entity.types[0])" stroke-width="2" stroke-linejoin="round" />
+                    <template x-for="a in cmpHexAxes()" :key="'lb' + a.key">
+                      <text :x="a.tx" :y="a.ty" text-anchor="middle" class="cmp-hex-axis">
+                        <tspan x="a.tx" dy="0" :class="{ 'cmp-best': slot.entity.stats[a.key] === cmpBestStat(a.key) }" x-text="a.label"></tspan>
+                        <tspan x="a.tx" dy="10" :class="{ 'cmp-best': slot.entity.stats[a.key] === cmpBestStat(a.key) }" x-text="slot.entity.stats[a.key]"></tspan>
+                      </text>
+                    </template>
+                  </svg>
+                  <div class="cmp-hex-types">
+                    <template x-for="t in slot.entity.types" :key="t">
+                      <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                    </template>
+                  </div>
+                  <div class="cmp-hex-abilities">
+                    <template x-for="ab in slot.entity.abilities" :key="ab">
+                      <span class="cmp-hex-ability" x-text="capitalize(ab.replace(/-/g, ' '))"></span>
+                    </template>
+                  </div>
+                  <div class="cmp-hex-total">Total <strong x-text="statTotal(slot.entity)"></strong></div>
+                </div>
+              </template>
+            </div>
+          </template>
         </div>
       </div>
     </div>
