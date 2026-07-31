@@ -196,6 +196,13 @@ document.addEventListener('alpine:init', () => {
     cmpKind: 'pokemon',
     cmpSlots: [{ search: '', results: [], entity: null }],
     cmpHexView: false,
+    links: [],
+    linksByCategory: [],
+    linksLoaded: false,
+    linksError: false,
+    userLinks: [],
+    newLinkName: '',
+    newLinkUrl: '',
 
     // === Items State ===
     items: [],
@@ -286,6 +293,11 @@ document.addEventListener('alpine:init', () => {
         this.itemRecompute();
       }
       this.collectionLoad();
+      try {
+        const saved = JSON.parse(localStorage.getItem('pokemonUserLinks') || '[]');
+        if (Array.isArray(saved)) this.userLinks = saved;
+      } catch (e) {}
+      this.loadLinks();
       try {
         const saved = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
         this.recentlyViewed = saved;
@@ -1745,6 +1757,48 @@ document.addEventListener('alpine:init', () => {
         this.activeTab = 'items';
         this.openItemDetail(slot.entity);
       }
+    },
+
+    async loadLinks() {
+      this.linksLoaded = false;
+      this.linksError = false;
+      try {
+        const resp = await fetch('links.json');
+        if (!resp.ok) throw new Error('not found');
+        this.links = await resp.json();
+        const cats = {};
+        (this.links || []).forEach((l) => {
+          if (!cats[l.category]) cats[l.category] = [];
+          cats[l.category].push(l);
+        });
+        this.linksByCategory = Object.keys(cats).map((c) => ({ category: c, links: cats[c] }));
+      } catch (e) {
+        this.linksError = true;
+      }
+      this.linksLoaded = true;
+    },
+
+    addUserLink() {
+      const name = (this.newLinkName || '').trim();
+      const url = (this.newLinkUrl || '').trim();
+      if (!name || !url) return;
+      this.userLinks.push({ name, url });
+      this.newLinkName = '';
+      this.newLinkUrl = '';
+      this.saveUserLinks();
+    },
+
+    removeUserLink(i) {
+      this.userLinks.splice(i, 1);
+      this.saveUserLinks();
+    },
+
+    saveUserLinks() {
+      try { localStorage.setItem('pokemonUserLinks', JSON.stringify(this.userLinks)); } catch (e) {}
+    },
+
+    openLink(url) {
+      window.open(url, '_blank');
     },
 
     // === Items Methods ===
