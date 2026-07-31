@@ -1214,6 +1214,18 @@ body {
 .cmp-hex-total { font-size: 0.9rem; }
 .cmp-hex-axis { font-size: 0.65rem; fill: var(--text-dim); }
 .cmp-hex-card text.cmp-best { fill: var(--accent); }
+.links-page { padding: 16px 0; }
+.links-section { margin-bottom: 24px; }
+.links-title { margin: 0 0 10px; font-size: 1rem; }
+.links-add { display: flex; gap: 8px; margin-bottom: 10px; max-width: 560px; }
+.links-cat { margin-bottom: 16px; }
+.links-cat-title { font-weight: 600; margin-bottom: 6px; color: var(--text-dim); }
+.links-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.links-item { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+.links-item a { color: var(--accent); text-decoration: none; }
+.links-item a:hover { text-decoration: underline; }
+.links-remove { background: none; border: none; color: var(--text-dim); font-size: 1rem; cursor: pointer; padding: 0 2px; }
+.links-remove:hover { color: var(--accent); }
 
 .cl-page { padding: 16px 0; }
 .cl-progress { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); }
