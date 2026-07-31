@@ -1764,7 +1764,7 @@ document.addEventListener('alpine:init', () => {
       try {
         let data = window.__LINKS_DATA__;
         if (!data) {
-          const resp = await fetch('links.json');
+          const resp = await fetch('links-backup.json');
           if (!resp.ok) throw new Error('not found');
           data = await resp.json();
         }

@@ -1,9 +1,13 @@
-ÿþTask 1: complete (commits 857eb150..d3c745d, review clean)
-Task 2: complete (commits d3c745d..4c4b424, review clean)
-Task 3: complete (commits 4c4b424..ad1db49, review clean)
-Task 4: complete (commits ad1db49..b230cfb, review clean)
-Task 5: complete (commits b230cfb..87ca7b7, review clean)
-Task 6: complete (commits 87ca7b7..40ccc7f, review clean)
-Task 7: complete (verification - already wired)
-Task 8: complete (commits 40ccc7f, AGENTS.md updated)
-Task 9: complete (final review approved, ready to merge)
+ï»¿# SDD Progress â€” Comparer Hexagon + Links feature (2026-07-31)
+
+BASE: db209a4 (HEAD before Task 1)
+
+Task 1: done (bf1964c)
+Task 2: done (5a83976)
+Task 3: done (2116bd0)
+Task 4: done (59c214f)
+Task 5: done (e6ff4b1 + d9d2aae)
+Task 6: done (8169948)
+Task 7: done (3991819)
+Task 8: done (verification + review fixes cce639d)
+Bug fix (comparer name column empty/stale): root-caused + fixed in index.html (name span x-show+x-text -> template x-if including slot.entity). Fix verified for Moves/Items/Pokemon + multi-slot + hexagon toggle.

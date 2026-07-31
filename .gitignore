@@ -3,5 +3,5 @@ docs/
 wallpapers/
 AGENTS.md
 *.json
-!links.json
+!links-backup.json
 generate-*.js

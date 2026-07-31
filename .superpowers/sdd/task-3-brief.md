@@ -1,147 +1,123 @@
-### Task 3: Collection State + Init + localStorage
+# Task 3 Brief — Hexagon markup, Table/Hexagon toggle, fix blank move-name column, dblclick nav
 
-**Files:**
-- Modify: `app.js` (add state properties and init/load/save logic)
+Modify ONLY `index.html`. No other files.
 
-**Interfaces:**
-- Consumes: existing `init()` pattern
-- Produces: `collection`, `collectionSearchInput`, `collectionSort`, `collectionResults`, `collectionModal*`, `collectionApiLoading`, `collectionSearchError`, `collectionDeleteConfirm` state, plus `collectionGradedCount()`, `collectionTotalValue()`, `collectionFormatPrice()`, `collectionRecompute()`, `variantLabel()`, `collectionLoad()`, `collectionSave()`, `collectionFiltered()` methods
+## Rules
+- Do NOT add code comments.
+- Locate anchors by EXACT string match (not line numbers — files shift).
+- Do NOT commit.
 
-- [ ] **Step 1: Add state properties**
+## Changes (all within the comparer section, inside `<div class="cmp-page" x-show="toolSubTab === 'comparer'">`)
 
-In `app.js`, add to the data object (around the wp/wallpaper state area, e.g. after line 118, after the `wpGenerating: false` line):
-
-```js
-// === Collection State ===
-collection: [],
-collectionSearchInput: '',
-collectionSort: 'date',
-collectionResults: [],
-collectionApiLoading: false,
-collectionSearchError: null,
-collectionApiDebounce: null,
-collectionModalOpen: false,
-collectionModalMode: 'add',
-collectionModalCard: null,
-collectionModalVariants: [],
-collectionModalVariant: '',
-collectionModalGrade: null,
-collectionModalQuantity: 1,
-collectionModalEntryIndex: null,
-collectionDeleteConfirm: false,
-collectionPsaMultipliers: { 1: 0.08, 2: 0.12, 3: 0.18, 4: 0.28, 5: 0.40, 6: 0.55, 7: 0.70, 8: 0.90, 9: 1.35, 10: 2.80 },
+### 1. Add the view toggle
+Insert AFTER the `.cmp-kinds` closing `</div>` and BEFORE `<div class="cmp-slots">`:
+```html
+        <div class="cmp-toggle" x-show="cmpKind === 'pokemon'">
+          <button class="cmp-kind-btn" :class="{ active: !cmpHexView }" @click="cmpHexView = false">Table</button>
+          <button class="cmp-kind-btn" :class="{ active: cmpHexView }" @click="cmpHexView = true">Hexagon</button>
+        </div>
 ```
 
-- [ ] **Step 2: Add computed methods**
+### 2. Gate the table view
+Change the table wrapper's x-show so it hides when hexagon view is active for Pokémon:
+```html
+        <div class="table-wrapper" x-show="cmpSlots.some(s => s.entity) && !(cmpKind === 'pokemon' && cmpHexView)">
+```
+(Find the current line that starts with `<div class="table-wrapper" x-show="cmpSlots.some` and replace it.)
 
-Add after the state properties (in the methods section of the returned object, e.g. after the `wpDownload` method or in a logical spot):
-
-```js
-collectionGradedCount() {
-  return this.collection.filter(e => e.grade != null).length;
-},
-
-collectionTotalValue() {
-  const total = this.collection.reduce((sum, e) => {
-    const price = e.grade != null && e.priceGraded != null ? e.priceGraded : (e.priceUngraded || 0);
-    return sum + price * e.quantity;
-  }, 0);
-  return '$' + total.toFixed(2);
-},
-
-collectionFormatPrice(entry) {
-  const price = entry.grade != null && entry.priceGraded != null
-    ? entry.priceGraded
-    : (entry.priceUngraded || 0);
-  if (price === 0) return '—';
-  return '$' + price.toFixed(2);
-},
-
-variantLabel(key) {
-  const map = {
-    holofoil: 'Holofoil',
-    reverseHolofoil: 'Reverse Holo',
-    normal: 'Normal',
-    '1stEditionHolofoil': '1st Edition Holo',
-    '1stEditionNormal': '1st Edition',
-    unlimitedHolofoil: 'Unlimited Holo',
-  };
-  return map[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
-},
+### 3. Add the hexagon view
+Insert AFTER the table-wrapper closing `</div>` (the `</div>` right after `</table>`) and BEFORE the `</div>` that closes `cmp-page`:
+```html
+        <div class="cmp-hex-row" x-show="cmpKind === 'pokemon' && cmpHexView">
+          <template x-for="(slot, i) in cmpSlots" :key="'hex' + i">
+            <div class="cmp-hex-card" :class="{ 'cmp-hex-empty': !slot.entity }" @dblclick="cmpOpenDetail(slot)">
+              <template x-if="!slot.entity">
+                <div class="cmp-hex-placeholder">Empty slot</div>
+              </template>
+              <template x-if="slot.entity">
+                <div>
+                  <div class="cmp-hex-head">
+                    <img :src="spriteUrl(slot.entity.id)" class="cmp-hex-sprite" width="56" height="56">
+                    <span class="cmp-hex-name" x-text="cmpLabel('pokemon', slot.entity)"></span>
+                  </div>
+                  <svg viewBox="0 0 200 190" width="200" height="190" role="img">
+                    <template x-for="(g, gi) in cmpHexGrid()" :key="'g' + gi">
+                      <polygon :points="g" fill="none" stroke="var(--border)" stroke-width="1" />
+                    </template>
+                    <template x-for="a in cmpHexAxes()" :key="'ax' + a.key">
+                      <line :x1="100" :y1="90" :x2="a.x" :y2="a.y" stroke="var(--border)" stroke-width="1" />
+                    </template>
+                    <polygon :points="cmpHexPoints(slot.entity)" :fill="typeColor(slot.entity.types[0])" fill-opacity="0.35" :stroke="typeColor(slot.entity.types[0])" stroke-width="2" stroke-linejoin="round" />
+                    <template x-for="a in cmpHexAxes()" :key="'lb' + a.key">
+                      <text :x="a.tx" :y="a.ty" text-anchor="middle" class="cmp-hex-axis">
+                        <tspan x="a.tx" dy="0" :class="{ 'cmp-best': slot.entity.stats[a.key] === cmpBestStat(a.key) }" x-text="a.label"></tspan>
+                        <tspan x="a.tx" dy="10" :class="{ 'cmp-best': slot.entity.stats[a.key] === cmpBestStat(a.key) }" x-text="slot.entity.stats[a.key]"></tspan>
+                      </text>
+                    </template>
+                  </svg>
+                  <div class="cmp-hex-types">
+                    <template x-for="t in slot.entity.types" :key="t">
+                      <span class="type-badge" :class="'type-' + t" x-text="capitalize(t)"></span>
+                    </template>
+                  </div>
+                  <div class="cmp-hex-abilities">
+                    <template x-for="ab in slot.entity.abilities" :key="ab">
+                      <span class="cmp-hex-ability" x-text="capitalize(ab.replace(/-/g, ' '))"></span>
+                    </template>
+                  </div>
+                  <div class="cmp-hex-total">Total <strong x-text="statTotal(slot.entity)"></strong></div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
 ```
 
-- [ ] **Step 3: Add collectionRecompute()**
-
-```js
-collectionRecompute() {
-  // sorted + filtered view is computed reactively via Alpine
-  // This triggers reactivity on sort/filter changes
-  this.collection = [...this.collection];
-},
+### 4. Fix the blank move-name column
+In the table body, REMOVE this nested block entirely (the `<td>`'s name cell):
+```html
+                      <template x-if="f.key === 'name'">
+                        <span x-text="cmpLabel(cmpKind, slot.entity)"></span>
+                      </template>
 ```
-
-- [ ] **Step 4: Add load/save helpers**
-
-```js
-collectionLoad() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('pokemonCollection') || '[]');
-    this.collection = saved;
-  } catch (e) {
-    this.collection = [];
-  }
-  try {
-    const mult = JSON.parse(localStorage.getItem('pokemonCollectionMultipliers') || 'null');
-    if (mult) this.collectionPsaMultipliers = mult;
-  } catch (e) {}
-},
-
-collectionSave() {
-  try {
-    localStorage.setItem('pokemonCollection', JSON.stringify(this.collection));
-  } catch (e) {}
-},
+And INSERT at the top of the same `<td>` (before the `<template x-if="f.key === 'sprite'">` block) an x-show-based span:
+```html
+                        <span x-show="f.key === 'name'" x-text="cmpLabel(cmpKind, slot.entity)"></span>
 ```
-
-Then add `this.collectionLoad();` in the `async init()` block (after the factsData loading, before savedTeams loading). Look for a line like `if (window.__FACTS_DATA__) { this.factsData = window.__FACTS_DATA__; }` and add it after that block.
-
-- [ ] **Step 5: Add collectionFiltered() method**
-
-```js
-collectionFiltered() {
-  let result = [...this.collection];
-  if (this.collectionSearchInput && this.collectionSearchInput.trim()) {
-    const q = this.collectionSearchInput.toLowerCase().trim();
-    result = result.filter(e =>
-      e.name.toLowerCase().includes(q) ||
-      e.setName.toLowerCase().includes(q)
-    );
-  }
-  const sort = this.collectionSort;
-  result.sort((a, b) => {
-    if (sort === 'name') return a.name.localeCompare(b.name);
-    if (sort === 'set') return a.setName.localeCompare(b.setName) || a.number.localeCompare(b.number);
-    if (sort === 'grade') {
-      const ga = a.grade || 0, gb = b.grade || 0;
-      return gb - ga;
-    }
-    if (sort === 'value') {
-      const va = (a.grade != null && a.priceGraded != null ? a.priceGraded : (a.priceUngraded || 0));
-      const vb = (b.grade != null && b.priceGraded != null ? b.priceGraded : (b.priceUngraded || 0));
-      return vb - va;
-    }
-    return b.updatedAt - a.updatedAt;
-  });
-  return result;
-},
+The `<td>` currently looks like:
+```html
+                    <td>
+                      <template x-if="f.key === 'sprite'">
+                        <img :src="spriteUrl(slot.entity.id)" class="cmp-sprite" width="48" height="48">
+                      </template>
+                      <template x-if="f.key === 'name'">
+                        <span x-text="cmpLabel(cmpKind, slot.entity)"></span>
+                      </template>
 ```
-
-- [ ] **Step 6: Verify in browser**
-
-Open browser console and run:
-```js
-document.querySelector('[x-data]').__x.$data.collectionLoad();
-document.querySelector('[x-data]').__x.$data.collection = [{ id: 'test-1', name: 'Test Card', setName: 'Test', number: '1', image: '', variant: 'holofoil', variantLabel: 'Holofoil', grade: 9, quantity: 1, priceUngraded: 100, updatedAt: Date.now() }];
+It must become:
+```html
+                    <td>
+                      <span x-show="f.key === 'name'" x-text="cmpLabel(cmpKind, slot.entity)"></span>
+                      <template x-if="f.key === 'sprite'">
+                        <img :src="spriteUrl(slot.entity.id)" class="cmp-sprite" width="48" height="48">
+                      </template>
 ```
+All other template blocks (types/type/damage_class/category/desc/numeric) stay as-is.
 
-The grid should show a test card entry.
+### 5. Add double-click on table rows
+Change the table row opening tag from:
+```html
+                <tr x-show="slot.entity">
+```
+to:
+```html
+                <tr x-show="slot.entity" @dblclick="cmpOpenDetail(slot)">
+```
+(There may be more than one `<tr x-show="slot.entity">` — the one to change is inside the comparer table `<tbody>`, i.e. the one on the line before `<template x-for="f in cmpFields(cmpKind)"`.)
+
+## Verification
+- `node --check index.html` is not applicable (HTML). Instead re-read the section after editing to confirm structure: toggle before `.cmp-slots`, table-wrapper x-show updated, hexagon row between table-wrapper close and cmp-page close, name span present in td, `@dblclick` on the comparer row.
+- Confirm `@click.outside="slot.results = []"` and the remove button `x-show="slot.entity && cmpSlots.length > 1"` are still intact (Task 1 additions).
+
+## Return
+Report: exact anchors matched, what was inserted/removed for each of the 5 changes, and confirmation that existing Task 1 attributes were preserved.

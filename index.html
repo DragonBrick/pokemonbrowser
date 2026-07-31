@@ -16,12 +16,12 @@
           <button :class="{ active: activeTab === 'pokemon' }" @click="switchTab('pokemon')" @dblclick="closeDetail()">Pokémon</button>
           <button :class="{ active: activeTab === 'moves' }" @click="switchTab('moves')" @dblclick="closeDetail()">Moves</button>
           <button :class="{ active: activeTab === 'abilities' }" @click="switchTab('abilities')" @dblclick="closeDetail()">Abilities</button>
+          <button :class="{ active: activeTab === 'items' }" @click="switchTab('items')" @dblclick="closeDetail()">Items</button>
           <button :class="{ active: activeTab === 'teambuilder' }" @click="switchTab('teambuilder')" @dblclick="closeDetail()">Team Builder</button>
           <button :class="{ active: activeTab === 'wallpaper' }" @click="switchTab('wallpaper')" @dblclick="closeDetail()">Wallpaper</button>
           <button :class="{ active: activeTab === 'speedrun' }" @click="switchTab('speedrun')" @dblclick="closeDetail()" x-show="pokemon.length">Speedrun</button>
           <button :class="{ active: activeTab === 'games' }" @click="switchTab('games')" @dblclick="closeDetail()" x-show="pokemon.length">Games</button>
           <button :class="{ active: activeTab === 'collection' }" @click="switchTab('collection')" @dblclick="closeDetail()">Collection</button>
-          <button :class="{ active: activeTab === 'items' }" @click="switchTab('items')" @dblclick="closeDetail()">Items</button>
           <button :class="{ active: activeTab === 'types' }" @click="switchTab('types')" @dblclick="closeDetail()">Tools</button>
         </nav>
       </div>
@@ -1510,7 +1510,7 @@
                 <tr x-show="slot.entity" @dblclick="cmpOpenDetail(slot)">
                   <template x-for="f in cmpFields(cmpKind)" :key="f.key">
                     <td>
-                      <span x-show="f.key === 'name'" x-text="cmpLabel(cmpKind, slot.entity)"></span>
+                      <template x-if="f.key === 'name' && slot.entity"><span x-text="cmpLabel(cmpKind, slot.entity)"></span></template>
                       <template x-if="f.key === 'sprite'">
                         <img :src="spriteUrl(slot.entity.id)" class="cmp-sprite" width="48" height="48">
                       </template>
