@@ -1565,8 +1565,8 @@
                     <polygon :points="cmpHexPoints(slot.entity)" :fill="typeColor(slot.entity.types[0])" fill-opacity="0.35" :stroke="typeColor(slot.entity.types[0])" stroke-width="2" stroke-linejoin="round" />
                     <template x-for="a in cmpHexAxes()" :key="'lb' + a.key">
                       <text :x="a.tx" :y="a.ty" text-anchor="middle" class="cmp-hex-axis">
-                        <tspan x="a.tx" dy="0" :class="{ 'cmp-best': slot.entity.stats[a.key] === cmpBestStat(a.key) }" x-text="a.label"></tspan>
-                        <tspan x="a.tx" dy="10" :class="{ 'cmp-best': slot.entity.stats[a.key] === cmpBestStat(a.key) }" x-text="slot.entity.stats[a.key]"></tspan>
+                        <tspan :x="a.tx" dy="0" :class="{ 'cmp-best': slot.entity.stats[a.key] === cmpBestStat(a.key) }" x-text="a.label"></tspan>
+                        <tspan :x="a.tx" dy="10" :class="{ 'cmp-best': slot.entity.stats[a.key] === cmpBestStat(a.key) }" x-text="slot.entity.stats[a.key]"></tspan>
                       </text>
                     </template>
                   </svg>
@@ -2052,6 +2052,7 @@
   <script src="evolution-data.js"></script>
   <script src="facts-data.js"></script>
   <script src="items-data.js"></script>
+  <script src="links-data.js"></script>
   <script src="moves-priority.js"></script>
   <script src="app.js"></script>
   <script src="alpine.min.js"></script>

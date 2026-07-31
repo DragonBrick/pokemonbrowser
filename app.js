@@ -198,7 +198,6 @@ document.addEventListener('alpine:init', () => {
     cmpHexView: false,
     links: [],
     linksByCategory: [],
-    linksLoaded: false,
     linksError: false,
     userLinks: [],
     newLinkName: '',
@@ -1680,6 +1679,7 @@ document.addEventListener('alpine:init', () => {
 
     cmpResetSlots() {
       this.cmpSlots = this.cmpSlots.map(() => ({ search: '', results: [], entity: null }));
+      this.cmpHexView = false;
     },
 
     _hexPointsFrom(vals, radius, cx, cy) {
@@ -1760,12 +1760,15 @@ document.addEventListener('alpine:init', () => {
     },
 
     async loadLinks() {
-      this.linksLoaded = false;
       this.linksError = false;
       try {
-        const resp = await fetch('links.json');
-        if (!resp.ok) throw new Error('not found');
-        this.links = await resp.json();
+        let data = window.__LINKS_DATA__;
+        if (!data) {
+          const resp = await fetch('links.json');
+          if (!resp.ok) throw new Error('not found');
+          data = await resp.json();
+        }
+        this.links = data;
         const cats = {};
         (this.links || []).forEach((l) => {
           if (!cats[l.category]) cats[l.category] = [];
@@ -1775,7 +1778,6 @@ document.addEventListener('alpine:init', () => {
       } catch (e) {
         this.linksError = true;
       }
-      this.linksLoaded = true;
     },
 
     addUserLink() {
@@ -1795,10 +1797,6 @@ document.addEventListener('alpine:init', () => {
 
     saveUserLinks() {
       try { localStorage.setItem('pokemonUserLinks', JSON.stringify(this.userLinks)); } catch (e) {}
-    },
-
-    openLink(url) {
-      window.open(url, '_blank');
     },
 
     // === Items Methods ===

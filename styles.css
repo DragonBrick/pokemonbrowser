@@ -1213,7 +1213,7 @@ body {
 .cmp-hex-ability { font-size: 0.8rem; color: var(--text-dim); }
 .cmp-hex-total { font-size: 0.9rem; }
 .cmp-hex-axis { font-size: 0.65rem; fill: var(--text-dim); }
-.cmp-hex-card text.cmp-best { fill: var(--accent); }
+.cmp-hex-card tspan.cmp-best { fill: var(--accent); }
 .links-page { padding: 16px 0; }
 .links-section { margin-bottom: 24px; }
 .links-title { margin: 0 0 10px; font-size: 1rem; }
