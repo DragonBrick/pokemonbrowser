@@ -560,6 +560,7 @@
                 <button @click="addMoveChip('power'); moveShowAddMenu = false">Power</button>
                 <button @click="addMoveChip('pp'); moveShowAddMenu = false">PP</button>
                 <button @click="addMoveChip('accuracy'); moveShowAddMenu = false">Accuracy</button>
+                <button @click="addMoveChip('priority'); moveShowAddMenu = false">Priority</button>
               </div>
             </div>
 
@@ -599,7 +600,7 @@
                         </div>
                       </span>
                     </template>
-                    <template x-if="chip.type === 'power' || chip.type === 'pp' || chip.type === 'accuracy'">
+                    <template x-if="chip.type === 'power' || chip.type === 'pp' || chip.type === 'accuracy' || chip.type === 'priority'">
                       <span class="chip-edit-row">
                         <select x-model="chip.operator">
                           <option value=">">≥</option>
@@ -640,6 +641,7 @@
                   <td class="col-stat" x-text="m.power != null ? m.power : '—'"></td>
                   <td class="col-stat" x-text="m.accuracy != null ? m.accuracy : '—'"></td>
                   <td class="col-stat" x-text="m.pp != null ? m.pp : '—'"></td>
+                  <td class="col-stat" x-text="m.priority != null ? signed(m.priority) : '—'"></td>
                   <td>
                     <span class="category-badge" :class="'category-' + m.damage_class" x-show="m.damage_class" x-text="capitalize(m.damage_class)"></span>
                     <span x-show="!m.damage_class" class="text-dim">—</span>

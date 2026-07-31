@@ -209,6 +209,7 @@ document.addEventListener('alpine:init', () => {
       { key: 'power', label: 'Power', sortable: true },
       { key: 'accuracy', label: 'Acc', sortable: true },
       { key: 'pp', label: 'PP', sortable: true },
+      { key: 'priority', label: 'Priority', sortable: true },
       { key: 'damage_class', label: 'Category', sortable: false },
       { key: 'description', label: 'Description', sortable: false },
       { key: 'learners', label: 'Learners', sortable: true },
@@ -603,6 +604,11 @@ document.addEventListener('alpine:init', () => {
           if (!isNaN(val)) {
             result = result.filter((m) => m.accuracy != null && (chips[0].operator === '>' ? m.accuracy >= val : m.accuracy <= val));
           }
+        } else if (type === 'priority') {
+          const val = parseInt(chips[0].value);
+          if (!isNaN(val)) {
+            result = result.filter((m) => m.priority != null && (chips[0].operator === '>' ? m.priority >= val : m.priority <= val));
+          }
         }
       }
       const key = this.moveSortKey;
@@ -643,7 +649,7 @@ document.addEventListener('alpine:init', () => {
         chip.value = '';
         chip.suggestions = [];
         chip.showDropdown = false;
-      } else if (type === 'power' || type === 'pp' || type === 'accuracy') {
+      } else if (type === 'power' || type === 'pp' || type === 'accuracy' || type === 'priority') {
         chip.operator = '>';
         chip.value = '';
       }
@@ -669,6 +675,7 @@ document.addEventListener('alpine:init', () => {
       if (chip.type === 'power') return `Power ${chip.operator === '>' ? '≥' : '≤'} ${chip.value || '?'}`;
       if (chip.type === 'pp') return `PP ${chip.operator === '>' ? '≥' : '≤'} ${chip.value || '?'}`;
       if (chip.type === 'accuracy') return `Accuracy ${chip.operator === '>' ? '≥' : '≤'} ${chip.value || '?'}`;
+      if (chip.type === 'priority') return `Priority ${chip.operator === '>' ? '≥' : '≤'} ${chip.value || '?'}`;
       return '';
     },
 
