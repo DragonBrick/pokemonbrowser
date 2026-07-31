@@ -1242,7 +1242,12 @@
           </div>
         </div>
       </div>
-      <div class="gm-page">
+      <div class="gm-subtabs">
+        <button class="gm-chooser-btn" :class="{ active: gmSubTab === 'games' }" @click="gmSubTab = 'games'">Games</button>
+        <button class="gm-chooser-btn" :class="{ active: gmSubTab === 'checklist' }" @click="gmSubTab = 'checklist'">Checklist</button>
+      </div>
+
+      <div class="gm-page" x-show="gmSubTab === 'games'">
         <div class="gm-chooser">
           <div class="gm-chooser-row">
             <span class="gm-chooser-label">Game</span>
@@ -1367,6 +1372,27 @@
         </div>
 
         <div class="gm-message" x-show="gmMessage && !gmRevealed" x-text="gmMessage"></div>
+      </div>
+
+      <div class="cl-page" x-show="gmSubTab === 'checklist'">
+        <div class="cl-progress" x-text="checklistProgress()"></div>
+        <div class="cl-grid">
+          <template x-for="g in checklistGens" :key="g.title">
+            <div class="cl-gen">
+              <h2 class="cl-gen-title" x-text="g.title"></h2>
+              <template x-for="game in g.games" :key="game[0]">
+                <div class="cl-game" :class="{ 'cl-done': checklistDone(game[0]) }">
+                  <label>
+                    <input type="checkbox" :checked="checklistDone(game[0])" @change="checklistToggle(game[0], $event.target.checked)">
+                    <span class="cl-name" x-text="game[0]"></span>
+                  </label>
+                  <div class="cl-duplicate">Duplicate: <b x-text="game[1] ?? 'None'"></b></div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+        <button class="btn" @click="checklistReset()">Reset Progress</button>
       </div>
     </div>
 
