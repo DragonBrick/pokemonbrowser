@@ -606,7 +606,7 @@
                           <option value=">">≥</option>
                           <option value="<">≤</option>
                         </select>
-                        <input type="number" x-model="chip.value" placeholder="0" min="0" @keyup.enter="commitMoveChip(chip)">
+                        <input type="number" x-model="chip.value" placeholder="0" min="-7" @keyup.enter="commitMoveChip(chip)">
                       </span>
                     </template>
                     <button class="chip-commit" @click="commitMoveChip(chip)">✓</button>
@@ -1473,7 +1473,7 @@
         <div class="cmp-slots">
           <template x-for="(slot, i) in cmpSlots" :key="i">
             <div class="cmp-slot">
-              <div class="cmp-slot-search">
+              <div class="cmp-slot-search" @click.outside="slot.results = []">
                 <input type="text" class="search-input" :placeholder="'Search ' + (cmpKind === 'pokemon' ? 'a Pokémon' : cmpKind === 'moves' ? 'a move' : 'an item') + '...'" x-model="slot.search" @input="cmpFilterInput(slot)">
                 <div class="autocomplete-dropdown" x-show="slot.results.length">
                   <template x-for="r in slot.results" :key="cmpKind + '-' + (r.id || r.name)">
@@ -1484,7 +1484,7 @@
                   </template>
                 </div>
               </div>
-              <button class="cmp-slot-remove" x-show="slot.entity" @click="cmpRemove(i)">&times;</button>
+              <button class="cmp-slot-remove" x-show="slot.entity && cmpSlots.length > 1" @click="cmpRemove(i)">&times;</button>
             </div>
           </template>
           <button class="btn btn-sm" @click="cmpAddSlot()" x-show="cmpSlots.length < 5">+ Add Slot</button>

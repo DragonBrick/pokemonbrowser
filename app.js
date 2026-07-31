@@ -1645,7 +1645,7 @@ document.addEventListener('alpine:init', () => {
           .slice(0, 8);
       } else {
         slot.results = this.items
-          .filter((i) => i.name.toLowerCase().startsWith(q))
+          .filter((i) => i.name.replace(/-/g, ' ').toLowerCase().startsWith(q))
           .slice(0, 8);
       }
     },
