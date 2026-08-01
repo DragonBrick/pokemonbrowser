@@ -10,8 +10,11 @@ window.__LINKS_DATA__ = [
   { category: "Competitive", name: "Pokémon Showdown", url: "https://play.pokemonshowdown.com" },
   { category: "Competitive", name: "PokePaste", url: "https://pokepast.es" },
   { category: "Tools", name: "Showdown Team Builder", url: "https://play.pokemonshowdown.com/teambuilder" },
+  { category: "Tools", name: "Good Team Builder", url: "https://pokestratbuilder.com/team-builder" },
   { category: "Tools", name: "Damage Calculator", url: "https://calc.pokemonshowdown.com" },
   { category: "Tools", name: "Trainer Tower", url: "https://trainertower.com" },
   { category: "Official & Games", name: "Pokémon.com", url: "https://www.pokemon.com" },
+  { category: "Official & Games", name: "Pokérogue", url: "https://pokerogue.net/" },
+  { category: "Official & Games", name: "Pokémon TD", url: "https://pokepath.gg/en/play/" },
   { category: "Official & Games", name: "Pokémon HOME", url: "https://www.pokemon.com/us/app/pokemon-home" }
 ];

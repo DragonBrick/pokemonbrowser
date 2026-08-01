@@ -80,6 +80,7 @@ document.addEventListener('alpine:init', () => {
     detailMoveSearch: '',
     detailPokemonSearch: '',
     detailAbilitySearch: '',
+    detailLevel: 100,
 
     // === Team Builder State ===
     team: Array(6).fill(null).map(() => ({
@@ -842,6 +843,7 @@ document.addEventListener('alpine:init', () => {
       this.showDetailView = 'pokemon';
       this.detailItem = p;
       this.detailPokemonSearch = '';
+      this.detailLevel = 100;
       this.addToRecentlyViewed('pokemon', p.name);
       this.srCheck({ type: 'pokemon', id: p.id, name: p.name });
     },
@@ -1083,6 +1085,61 @@ document.addEventListener('alpine:init', () => {
     getEvolutionChain(id) {
       const entry = this.evolutionData[id];
       return entry ? entry.chain : null;
+    },
+
+    evolutionMethodLabel(node) {
+      if (!node) return '';
+      const method = node.method;
+      const item = node.item;
+      const level = node.level;
+      if (method === 'level-up') {
+        if (level != null) return 'Lv. ' + level;
+        if (node.happiness != null) return node.time ? 'Friendship (' + this.capitalize(node.time) + ')' : 'Friendship';
+        if (node.beauty != null) return 'Beauty';
+        if (node.known_move) return 'With ' + this.capitalize(node.known_move.replace(/-/g, ' '));
+        if (node.known_move_type) return this.capitalize(node.known_move_type) + ' Move';
+        if (node.time) return 'Level up (' + this.capitalize(node.time) + ')';
+        if (node.location) return 'Level up at ' + this.capitalize(node.location.replace(/-/g, ' '));
+        return 'Level up';
+      }
+      if (method === 'use-item') return item ? this.capitalize(item.replace(/-/g, ' ')) : 'Item';
+      if (method === 'trade') return node.trade_species ? 'Trade ' + this.capitalize(node.trade_species.replace(/-/g, ' ')) : 'Trade';
+      if (method === 'friendship') return 'Friendship';
+      if (method === 'shed') return 'Shed';
+      if (method === 'spin') return 'Spin';
+      if (method === 'three-critical-hits') return 'Three Critical Hits';
+      if (method === 'take-damage') return 'Take Damage';
+      if (method === 'tower-of-darkness') return 'Tower of Darkness';
+      if (method === 'tower-of-waters') return 'Tower of Waters';
+      if (method === 'agile-style') return 'Agile Style';
+      if (method === 'strong-style') return 'Strong Style';
+      if (method === 'recoil-damage') return 'Recoil Damage';
+      if (method === 'other') return 'Special';
+      return method ? this.capitalize(method.replace(/-/g, ' ')) : '';
+    },
+
+    statsAtLevel(pokemon, level) {
+      const lvl = Math.max(1, Math.min(100, level || 1));
+      const result = {};
+      const iv = 0;
+      const ev = 0;
+      for (const key of ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']) {
+        const base = pokemon.stats[key] || 0;
+        const inner = (2 * base + iv + Math.floor(ev / 4)) * lvl / 100;
+        if (key === 'hp') result[key] = Math.floor(inner) + lvl + 10;
+        else result[key] = Math.floor(inner) + 5;
+      }
+      return result;
+    },
+
+    detailLearnableMoves(pokemon, level) {
+      const lvl = Math.max(1, Math.min(100, level || 1));
+      const moves = (pokemon.level_moves || [])
+        .filter((m) => m.level <= lvl)
+        .slice();
+      const q = (this.detailPokemonSearch || '').toLowerCase();
+      const filtered = q ? moves.filter((m) => m.name.includes(q) || m.name.replace(/-/g, ' ').includes(q)) : moves;
+      return filtered;
     },
 
     getEvolutionStage(id) {

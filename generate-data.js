@@ -35,39 +35,55 @@ async function main() {
   console.log(`Found ${total} Pokémon`);
 
   const pokemon = [];
-  for (let i = 0; i < total; i++) {
-    const entry = listRes.results[i];
+  const pokemonEntries = listRes.results.map((entry) => {
     const id = parseInt(entry.url.split('/').filter(Boolean).pop());
-    // Megas and Gmax forms now included
-
-
-    try {
-      console.log(`  [${i + 1}/${total}] ${entry.name}...`);
-      const detail = await fetch(entry.url);
-      const types = detail.types.map((t) => t.type.name);
-      const stats = {};
-      STAT_NAMES.forEach((name) => {
-        const s = detail.stats.find((st) => st.stat.name === name);
-        stats[name] = s ? s.base_stat : 0;
-      });
-      const moves = detail.moves.map((m) => m.move.name);
-      const abilities = detail.abilities.map((a) => a.ability.name);
-      pokemon.push({
-        id,
-        name: entry.name,
-        types,
-        stats,
-        generation: generationForId(id),
-        moves,
-        height: detail.height,
-        weight: detail.weight,
-        abilities,
-        base_experience: detail.base_experience,
-      });
-    } catch (e) {
-      console.error(`  Failed for ${entry.name}: ${e.message}`);
+    return { entry, id };
+  });
+  const CONCURRENCY = 20;
+  let cursor = 0;
+  async function worker() {
+    while (cursor < pokemonEntries.length) {
+      const { entry, id } = pokemonEntries[cursor++];
+      try {
+        const detail = await fetch(entry.url);
+        const types = detail.types.map((t) => t.type.name);
+        const stats = {};
+        STAT_NAMES.forEach((name) => {
+          const s = detail.stats.find((st) => st.stat.name === name);
+          stats[name] = s ? s.base_stat : 0;
+        });
+        const moves = detail.moves.map((m) => m.move.name);
+        const abilities = detail.abilities.map((a) => a.ability.name);
+        const levelMoves = detail.moves
+          .map((m) => {
+            const levels = (m.version_group_details || [])
+              .filter((vg) => vg.move_learn_method && vg.move_learn_method.name === 'level-up' && vg.level_learned_at != null)
+              .map((vg) => vg.level_learned_at);
+            return levels.length ? { name: m.move.name, level: Math.min(...levels) } : null;
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+        pokemon.push({
+          id,
+          name: entry.name,
+          types,
+          stats,
+          generation: generationForId(id),
+          moves,
+          level_moves: levelMoves,
+          height: detail.height,
+          weight: detail.weight,
+          abilities,
+          base_experience: detail.base_experience,
+        });
+      } catch (e) {
+        console.error(`  Failed for ${entry.name}: ${e.message}`);
+      }
     }
   }
+  const workers = Array.from({ length: CONCURRENCY }, () => worker());
+  await Promise.all(workers);
+  console.log(`Fetched ${pokemon.length}/${total} Pokémon`);
 
   fs.writeFileSync('pokemon-data.json', JSON.stringify(pokemon, null, 2));
   fs.writeFileSync('pokemon-data.js', 'window.__POKEMON_DATA__ = ' + JSON.stringify(pokemon) + ';');

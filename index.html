@@ -278,7 +278,12 @@
                         </div>
                       </template>
                     </div>
-                    <span class="evo-arrow" x-show="si < getEvolutionChain(detailItem.id).length - 1"></span>
+                    <div class="evo-transition" x-show="si < getEvolutionChain(detailItem.id).length - 1">
+                      <template x-for="evo in getEvolutionChain(detailItem.id)[si + 1]" :key="'m' + evo.id">
+                        <span class="evo-method" x-show="evolutionMethodLabel(evo)" x-text="evolutionMethodLabel(evo)"></span>
+                      </template>
+                      <span class="evo-arrow"></span>
+                    </div>
                   </div>
                 </template>
               </div>
@@ -303,12 +308,41 @@
               </div>
             </div>
             <div class="detail-section">
-              <h3>Moves</h3>
-              <input type="text" class="search-input" placeholder="Search moves..." x-model="detailPokemonSearch">
-              <div class="detail-move-list">
-                <template x-for="m in detailItem.moves.filter(m => !detailPokemonSearch || m.includes(detailPokemonSearch.toLowerCase()))" :key="m">
-                  <span class="detail-move-chip" @dblclick="openMoveFromDetail(m)" x-text="m.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></span>
+              <h3>Stats at Level</h3>
+              <div class="level-sim-controls">
+                <input type="number" class="level-input" min="1" max="100" x-model.number="detailLevel">
+                <span class="level-sim-note">IV 0 / EV 0</span>
+              </div>
+              <div class="stat-list">
+                <template x-for="s in ['hp','attack','defense','special-attack','special-defense','speed']" :key="s">
+                  <div class="stat-row">
+                    <span class="stat-label" x-text="statLabel(s)"></span>
+                    <span class="stat-value" x-text="statsAtLevel(detailItem, detailLevel)[s]"></span>
+                    <div class="stat-bar-bg">
+                      <div class="stat-bar-fill" :style="'width:' + statBarWidth(statsAtLevel(detailItem, detailLevel)[s]) + '%'"
+                           :class="'stat-' + s"></div>
+                    </div>
+                  </div>
                 </template>
+                <div class="stat-total">
+                  <span class="stat-label">Total</span>
+                  <span class="stat-value" x-text="Object.values(statsAtLevel(detailItem, detailLevel)).reduce((a, b) => a + b, 0)"></span>
+                </div>
+              </div>
+            </div>
+            <div class="detail-section">
+              <h3>Moves at Level <span x-text="detailLevel"></span></h3>
+              <input type="text" class="search-input" placeholder="Search moves..." x-model="detailPokemonSearch">
+              <div class="detail-move-list" x-show="detailLearnableMoves(detailItem, detailLevel).length">
+                <template x-for="m in detailLearnableMoves(detailItem, detailLevel)" :key="m.name">
+                  <span class="detail-move-chip">
+                    <span class="move-level-badge" x-text="'Lv. ' + m.level"></span>
+                    <span @dblclick="openMoveFromDetail(m.name)" x-text="m.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></span>
+                  </span>
+                </template>
+              </div>
+              <div class="detail-no-moves" x-show="!detailLearnableMoves(detailItem, detailLevel).length">
+                No moves learned by level <span x-text="detailLevel"></span>.
               </div>
             </div>
               </div>
