@@ -747,21 +747,24 @@ body {
 
 /* Evolution Chain */
 .evo-chain {
-  display: flex;
+  display: grid;
   align-items: center;
-  gap: 0;
+  justify-items: center;
+  justify-content: start;
+  column-gap: 10px;
+  row-gap: 8px;
   padding: 8px 0;
 }
-.evo-group {
+.evo-cell {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.evo-stage {
+.evo-cell-arrow {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 .evo-node {
   display: flex;
@@ -794,14 +797,6 @@ body {
   max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.evo-transition {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  margin: 0 6px;
 }
 .level-sim-controls {
   display: flex;

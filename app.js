@@ -1087,6 +1087,61 @@ document.addEventListener('alpine:init', () => {
       return entry ? entry.chain : null;
     },
 
+    evolutionLayout(id) {
+      const chain = this.getEvolutionChain(id);
+      if (!chain || !chain.length) return null;
+      const childrenByParent = {};
+      for (let si = 1; si < chain.length; si++) {
+        for (const node of chain[si]) {
+          const pid = node.parent;
+          if (pid == null) continue;
+          if (!childrenByParent[pid]) childrenByParent[pid] = [];
+          childrenByParent[pid].push(node);
+        }
+      }
+      let nextRow = 1;
+      const rows = {};
+      const place = (node) => {
+        const kids = childrenByParent[node.id] || [];
+        if (!kids.length) {
+          rows[node.id] = { start: nextRow, end: nextRow };
+          nextRow++;
+        } else {
+          for (const k of kids) place(k);
+          rows[node.id] = {
+            start: Math.min(...kids.map(k => rows[k.id].start)),
+            end: Math.max(...kids.map(k => rows[k.id].end))
+          };
+        }
+      };
+      for (const root of chain[0]) place(root);
+      const cells = [];
+      for (let si = 0; si < chain.length; si++) {
+        for (const node of chain[si]) {
+          let r = rows[node.id];
+          if (!r) {
+            r = { start: nextRow, end: nextRow };
+            nextRow++;
+            rows[node.id] = r;
+          }
+          cells.push({ id: node.id, col: si, rowStart: r.start, rowEnd: r.end, node });
+        }
+      }
+      cells.sort((a, b) => a.rowStart - b.rowStart || a.col - b.col);
+      return { colCount: chain.length, totalRows: nextRow - 1, cells };
+    },
+
+    evoGridStyle(id) {
+      const layout = this.evolutionLayout(id);
+      if (!layout) return '';
+      return 'grid-template-columns: repeat(' + layout.colCount + ', auto); grid-template-rows: repeat(' + layout.totalRows + ', auto);';
+    },
+
+    evoCellStyle(cell) {
+      if (!cell) return '';
+      return 'grid-column: ' + (cell.col + 1) + '; grid-row: ' + cell.rowStart + ' / ' + (cell.rowEnd + 1) + ';';
+    },
+
     evolutionMethodLabel(node) {
       if (!node) return '';
       const method = node.method;

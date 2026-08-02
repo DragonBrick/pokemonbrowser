@@ -267,22 +267,16 @@
               <div class="detail-left">
             <div class="detail-section" x-show="getEvolutionChain(detailItem.id)">
               <h3>Evolution Chain</h3>
-              <div class="evo-chain">
-                <template x-for="(stage, si) in getEvolutionChain(detailItem.id)" :key="si">
-                  <div class="evo-group">
-                    <div class="evo-stage">
-                      <template x-for="evo in stage" :key="evo.id">
-                        <div class="evo-node" @dblclick="openPokemonFromDetail(evo.name)" :class="{ 'evo-current': evo.id === detailItem.id }">
-                          <img :src="spriteUrl(evo.id)" :alt="evo.name" width="48" height="48" @error="onSpriteError($event, evo.id)">
-                          <span class="evo-name" x-text="capitalize(evo.name)"></span>
-                        </div>
-                      </template>
-                    </div>
-                    <div class="evo-transition" x-show="si < getEvolutionChain(detailItem.id).length - 1">
-                      <template x-for="evo in getEvolutionChain(detailItem.id)[si + 1]" :key="'m' + evo.id">
-                        <span class="evo-method" x-show="evolutionMethodLabel(evo)" x-text="evolutionMethodLabel(evo)"></span>
-                      </template>
+              <div class="evo-chain" :style="evoGridStyle(detailItem.id)">
+                <template x-for="cell in evolutionLayout(detailItem.id).cells" :key="cell.id">
+                  <div class="evo-cell" :style="evoCellStyle(cell)">
+                    <div class="evo-cell-arrow" x-show="cell.col > 0">
+                      <span class="evo-method" x-text="evolutionMethodLabel(cell.node)"></span>
                       <span class="evo-arrow"></span>
+                    </div>
+                    <div class="evo-node" @dblclick="openPokemonFromDetail(cell.node.name)" :class="{ 'evo-current': cell.id === detailItem.id }">
+                      <img :src="spriteUrl(cell.id)" :alt="cell.node.name" width="48" height="48" @error="onSpriteError($event, cell.id)">
+                      <span class="evo-name" x-text="capitalize(cell.node.name)"></span>
                     </div>
                   </div>
                 </template>
