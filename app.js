@@ -215,6 +215,12 @@ document.addEventListener('alpine:init', () => {
     itemCategories: ['Battle', 'Berry', 'Choice', 'Evolution', 'Mega Stone', 'Misc', 'Type Boost'],
     itemDetailSearch: '',
 
+    voiceListening: false,
+    voiceSupported: false,
+    voiceRecognition: null,
+    voiceSuggested: null,
+    voiceNameIndex: {},
+
     moveColumns: [
       { key: 'name', label: 'Move', sortable: true },
       { key: 'type', label: 'Type', sortable: true },
@@ -318,6 +324,7 @@ document.addEventListener('alpine:init', () => {
       }
       this.team = this.savedTeams[0].slots;
       setInterval(() => this.persistSavedTeams(), 3000);
+      this.initVoice();
     },
 
     initDefaultTeams() {
@@ -3018,6 +3025,103 @@ document.addEventListener('alpine:init', () => {
         };
         img.src = src;
       });
+    },
+
+    buildVoiceNameIndex() {
+      const idx = {};
+      for (const p of this.pokemon) idx[p.name] = { type: 'pokemon', item: p };
+      for (const m of this.moves) {
+        if (!idx[m.name]) idx[m.name] = { type: 'move', item: m };
+      }
+      for (const a of this.abilities) {
+        if (!idx[a.name]) idx[a.name] = { type: 'ability', item: a };
+      }
+      for (const it of this.items) {
+        if (!idx[it.name]) idx[it.name] = { type: 'item', item: it };
+      }
+      this.voiceNameIndex = idx;
+    },
+
+    voiceSimilarity(a, b) {
+      a = a.toLowerCase().replace(/[^a-z0-9]/g, '');
+      b = b.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (!a || !b) return 0;
+      if (a.includes(b) || b.includes(a)) return 1;
+      let matches = 0;
+      let bi = 0;
+      for (let ai = 0; ai < a.length && bi < b.length; ai++) {
+        if (a[ai] === b[bi]) { matches++; bi++; }
+      }
+      return matches / Math.max(a.length, b.length);
+    },
+
+    processVoiceResult(transcript) {
+      if (!transcript) return;
+      const words = transcript.toLowerCase().trim().split(/\s+/);
+      const joined = words.join('');
+      let bestScore = 0;
+      let bestMatch = null;
+      for (const name in this.voiceNameIndex) {
+        const score = this.voiceSimilarity(joined, name);
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = this.voiceNameIndex[name];
+        }
+      }
+      if (bestScore > 0.7 && bestMatch) {
+        this.voiceSuggested = {
+          type: bestMatch.type,
+          item: bestMatch.item,
+          name: bestMatch.item.name
+        };
+      }
+    },
+
+    toggleVoice() {
+      if (!this.voiceSupported) return;
+      if (this.voiceListening) {
+        this.voiceListening = false;
+        if (this.voiceRecognition) this.voiceRecognition.stop();
+        return;
+      }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return;
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = false;
+      rec.lang = 'en-US';
+      const self = this;
+      rec.onresult = (e) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) {
+            self.processVoiceResult(e.results[i][0].transcript);
+          }
+        }
+      };
+      rec.onerror = (e) => {
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+          self.voiceListening = false;
+          self.voiceRecognition = null;
+        }
+      };
+      rec.onend = () => {
+        if (self.voiceListening) {
+          try { rec.start(); } catch (e) { /* ignore */ }
+        }
+      };
+      this.voiceRecognition = rec;
+      try {
+        rec.start();
+        this.voiceListening = true;
+      } catch (e) {
+        this.voiceSupported = false;
+      }
+    },
+
+    initVoice() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      this.voiceSupported = !!SpeechRecognition;
+      this.buildVoiceNameIndex();
     },
   }));
 });
