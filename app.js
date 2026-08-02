@@ -3084,34 +3084,36 @@ document.addEventListener('alpine:init', () => {
         if (this.voiceRecognition) this.voiceRecognition.stop();
         return;
       }
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return;
-      const rec = new SpeechRecognition();
-      rec.continuous = true;
-      rec.interimResults = false;
-      rec.lang = 'en-US';
-      const self = this;
-      rec.onresult = (e) => {
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          if (e.results[i].isFinal) {
-            self.processVoiceResult(e.results[i][0].transcript);
+      if (!this.voiceRecognition) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+        const rec = new SpeechRecognition();
+        rec.continuous = true;
+        rec.interimResults = false;
+        rec.lang = 'en-US';
+        const self = this;
+        rec.onresult = (e) => {
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            if (e.results[i].isFinal) {
+              self.processVoiceResult(e.results[i][0].transcript);
+            }
           }
-        }
-      };
-      rec.onerror = (e) => {
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-          self.voiceListening = false;
-          self.voiceRecognition = null;
-        }
-      };
-      rec.onend = () => {
-        if (self.voiceListening) {
-          try { rec.start(); } catch (e) { /* ignore */ }
-        }
-      };
-      this.voiceRecognition = rec;
+        };
+        rec.onerror = (e) => {
+          if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+            self.voiceListening = false;
+            self.voiceRecognition = null;
+          }
+        };
+        rec.onend = () => {
+          if (self.voiceListening) {
+            try { rec.start(); } catch (e) { /* ignore */ }
+          }
+        };
+        this.voiceRecognition = rec;
+      }
       try {
-        rec.start();
+        this.voiceRecognition.start();
         this.voiceListening = true;
       } catch (e) {
         this.voiceSupported = false;
