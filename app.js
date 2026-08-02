@@ -3114,8 +3114,10 @@ document.addEventListener('alpine:init', () => {
           }
         };
         rec.onend = () => {
-          if (self.voiceListening) {
+          if (self.voiceListening && window.location.protocol === 'https:') {
             try { rec.start(); } catch (e) { /* ignore */ }
+          } else {
+            self.voiceListening = false;
           }
         };
         this.voiceRecognition = rec;
