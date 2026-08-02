@@ -28,9 +28,9 @@ body {
 .header {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+  position: relative;
 }
 .header-left { display: flex; align-items: center; gap: 20px; }
-.header-center { display: flex; align-items: center; }
 .version {
   position: absolute; top: 8px; right: 12px;
   font-size: 0.6rem; color: var(--text-dim); opacity: 0.4; z-index: 10;
@@ -1659,6 +1659,9 @@ body {
 }
 
 .voice-bar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -1668,7 +1671,6 @@ body {
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s;
-  min-width: 80px;
 }
 .voice-bar-hidden {
   visibility: hidden;
