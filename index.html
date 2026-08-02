@@ -45,11 +45,11 @@
       </div>
       <div class="voice-bar" :class="{ 'voice-bar-hidden': voiceSuggested === null }"
            @click="voiceSuggested && voiceOpenSuggested()">
-        <template x-if="voiceSuggested.type === 'pokemon'">
+        <template x-if="voiceSuggested && voiceSuggested.type === 'pokemon'">
           <img :src="spriteUrl(voiceSuggested.item.id)" :alt="voiceSuggested.name" width="20" height="20"
                @error="onSpriteError($event, voiceSuggested.item.id)">
         </template>
-        <span class="voice-bar-name" x-text="capitalize(voiceSuggested.name)"></span>
+        <span class="voice-bar-name" x-text="voiceSuggested ? capitalize(voiceSuggested.name) : ''"></span>
       </div>
     </header>
 
