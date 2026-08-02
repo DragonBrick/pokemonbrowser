@@ -42,10 +42,7 @@
     </header>
 
     <div class="voice-bar" x-show="voiceSuggested !== null"
-         @click="voiceSuggested.type === 'pokemon' ? openPokemonDetail(voiceSuggested.item) :
-                 voiceSuggested.type === 'move' ? openMoveDetail(voiceSuggested.item) :
-                 voiceSuggested.type === 'ability' ? openAbilityDetail(voiceSuggested.item) :
-                 openItemDetail(voiceSuggested.item)">
+         @click="voiceOpenSuggested()">
       <template x-if="voiceSuggested.type === 'pokemon'">
         <img :src="spriteUrl(voiceSuggested.item.id)" :alt="voiceSuggested.name" width="24" height="24"
              @error="onSpriteError($event, voiceSuggested.item.id)">

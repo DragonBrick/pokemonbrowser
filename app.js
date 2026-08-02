@@ -3077,6 +3077,15 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    voiceOpenSuggested() {
+      const s = this.voiceSuggested;
+      if (!s) return;
+      if (s.type === 'pokemon') this.openPokemonDetail(s.item);
+      else if (s.type === 'move') this.openMoveDetail(s.item);
+      else if (s.type === 'ability') this.openAbilityDetail(s.item);
+      else if (s.type === 'item') this.openItemDetail(s.item);
+    },
+
     toggleVoice() {
       if (!this.voiceSupported) return;
       if (this.voiceListening) {
@@ -3102,7 +3111,6 @@ document.addEventListener('alpine:init', () => {
         rec.onerror = (e) => {
           if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
             self.voiceListening = false;
-            self.voiceRecognition = null;
           }
         };
         rec.onend = () => {
