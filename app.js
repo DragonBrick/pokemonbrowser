@@ -220,6 +220,7 @@ document.addEventListener('alpine:init', () => {
     voiceRecognition: null,
     voiceSuggested: null,
     voiceNameIndex: {},
+    voiceFilter: 'all',
 
     moveColumns: [
       { key: 'name', label: 'Move', sortable: true },
@@ -3062,10 +3063,12 @@ document.addEventListener('alpine:init', () => {
       let bestScore = 0;
       let bestMatch = null;
       for (const name in this.voiceNameIndex) {
+        const entry = this.voiceNameIndex[name];
+        if (this.voiceFilter !== 'all' && entry.type !== this.voiceFilter) continue;
         const score = this.voiceSimilarity(joined, name);
         if (score > bestScore) {
           bestScore = score;
-          bestMatch = this.voiceNameIndex[name];
+          bestMatch = entry;
         }
       }
       if (bestScore > 0.7 && bestMatch) {
@@ -3075,6 +3078,13 @@ document.addEventListener('alpine:init', () => {
           name: bestMatch.item.name
         };
       }
+    },
+
+    toggleVoiceFilter() {
+      const filters = ['all', 'pokemon', 'move', 'ability', 'item'];
+      const idx = filters.indexOf(this.voiceFilter);
+      this.voiceFilter = filters[(idx + 1) % filters.length];
+      this.voiceSuggested = null;
     },
 
     voiceOpenSuggested() {

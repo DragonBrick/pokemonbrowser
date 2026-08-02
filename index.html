@@ -41,14 +41,19 @@
       </div>
     </header>
 
-    <div class="voice-bar" x-show="voiceSuggested !== null"
-         @click="voiceOpenSuggested()">
-      <template x-if="voiceSuggested.type === 'pokemon'">
-        <img :src="spriteUrl(voiceSuggested.item.id)" :alt="voiceSuggested.name" width="24" height="24"
-             @error="onSpriteError($event, voiceSuggested.item.id)">
-      </template>
-      <span class="voice-bar-kind" x-text="voiceSuggested.type === 'pokemon' ? 'P' : voiceSuggested.type === 'move' ? 'M' : voiceSuggested.type === 'ability' ? 'A' : 'I'"></span>
-      <span class="voice-bar-name" x-text="capitalize(voiceSuggested.name)"></span>
+    <div class="voice-row" x-show="voiceSuggested !== null">
+      <button class="voice-filter-btn" @click="toggleVoiceFilter()" :title="'Voice filter: ' + voiceFilter">
+        <span x-text="voiceFilter === 'all' ? 'All' : voiceFilter === 'pokemon' ? 'P' : voiceFilter === 'move' ? 'M' : voiceFilter === 'ability' ? 'A' : 'I'"></span>
+      </button>
+      <div class="voice-bar"
+           @click="voiceOpenSuggested()">
+        <template x-if="voiceSuggested.type === 'pokemon'">
+          <img :src="spriteUrl(voiceSuggested.item.id)" :alt="voiceSuggested.name" width="24" height="24"
+               @error="onSpriteError($event, voiceSuggested.item.id)">
+        </template>
+        <span class="voice-bar-kind" x-text="voiceSuggested.type === 'pokemon' ? 'P' : voiceSuggested.type === 'move' ? 'M' : voiceSuggested.type === 'ability' ? 'A' : 'I'"></span>
+        <span class="voice-bar-name" x-text="capitalize(voiceSuggested.name)"></span>
+      </div>
     </div>
 
     <div x-show="srCountdown" class="sr-overlay" x-cloak @keydown.escape.window="srForfeit(); activeTab = 'home'" @keydown.enter.window="srSkipCountdown()">
@@ -136,6 +141,18 @@
                   <div class="home-card-name" x-text="capitalize(item.name)"></div>
                   <div class="home-card-meta">Gen <span x-text="item.generation || '—'"></span></div>
                   <div class="home-card-desc" x-text="(item.description || '').slice(0, 120) + ((item.description || '').length > 120 ? '…' : '')"></div>
+                </div>
+              </template>
+            </template>
+          </div>
+
+          <div class="home-card" @click="activeTab = 'items'; openItemDetail(items[dailyIndex(items)])">
+            <div class="home-card-icon">Item</div>
+            <template x-if="items.length">
+              <template x-for="item in [items[dailyIndex(items)]]" :key="item.name">
+                <div class="home-card-body">
+                  <div class="home-card-name" x-text="capitalize(item.name)"></div>
+                  <span class="home-card-cat" x-text="item.category"></span>
                 </div>
               </template>
             </template>
