@@ -10,6 +10,17 @@
   <div x-data="pokemonBrowser" class="app">
     <header class="header">
       <div class="header-left">
+        <button class="voice-mic"
+                :class="{ 'voice-listening': voiceListening }"
+                x-show="voiceSupported"
+                @click="toggleVoice()"
+                :title="voiceListening ? 'Stop listening' : 'Voice Suggestions'">
+                <span x-text="voiceListening ? '🎤' : '🎤'"></span>
+        </button>
+        <button class="voice-filter-btn" x-show="voiceSupported"
+                @click="toggleVoiceFilter()" :title="'Voice filter: ' + voiceFilter">
+          <span x-text="voiceFilter === 'all' ? 'All' : voiceFilter === 'pokemon' ? 'P' : voiceFilter === 'move' ? 'M' : voiceFilter === 'ability' ? 'A' : 'I'"></span>
+        </button>
         <h1 class="title">Pokémon Browser</h1>
         <nav class="tabs">
           <button :class="{ active: activeTab === 'home' }" @click="switchTab('home')" @dblclick="closeDetail()">Home</button>
@@ -26,17 +37,6 @@
         </nav>
       </div>
       <div class="header-actions">
-        <button class="voice-mic"
-                :class="{ 'voice-listening': voiceListening }"
-                x-show="voiceSupported"
-                @click="toggleVoice()"
-                :title="voiceListening ? 'Stop listening' : 'Voice Suggestions'">
-                <span x-text="voiceListening ? '🎤' : '🎤'"></span>
-        </button>
-        <button class="voice-filter-btn" x-show="voiceSupported"
-                @click="toggleVoiceFilter()" :title="'Voice filter: ' + voiceFilter">
-          <span x-text="voiceFilter === 'all' ? 'All' : voiceFilter === 'pokemon' ? 'P' : voiceFilter === 'move' ? 'M' : voiceFilter === 'ability' ? 'A' : 'I'"></span>
-        </button>
         <span class="result-count" x-show="activeTab === 'pokemon'" x-text="`${filteredPokemon.length} / ${pokemon.length} Pokémon`"></span>
         <span class="result-count" x-show="activeTab === 'moves'" x-text="`${filteredMoves.length} / ${moves.length} Moves`"></span>
         <span class="result-count" x-show="activeTab === 'abilities'" x-text="`${filteredAbilities.length} / ${abilities.length} Abilities`"></span>
