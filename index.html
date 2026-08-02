@@ -51,10 +51,11 @@
         <span class="result-count" x-show="activeTab === 'moves'" x-text="`${filteredMoves.length} / ${moves.length} Moves`"></span>
         <span class="result-count" x-show="activeTab === 'abilities'" x-text="`${filteredAbilities.length} / ${abilities.length} Abilities`"></span>
         <span class="result-count" x-show="activeTab === 'items'" x-text="`${filteredItems.length} / ${items.length} Items`"></span>
-        <span class="version">v1.2.3</span>
 
       </div>
     </header>
+
+    <span class="version">v1.2.3</span>
 
     <div x-show="srCountdown" class="sr-overlay" x-cloak @keydown.escape.window="srForfeit(); activeTab = 'home'" @keydown.enter.window="srSkipCountdown()">
       <div class="sr-overlay-box">
