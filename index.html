@@ -25,6 +25,16 @@
           <button :class="{ active: activeTab === 'types' }" @click="switchTab('types')" @dblclick="closeDetail()">Tools</button>
         </nav>
       </div>
+      <div class="header-center">
+        <div class="voice-bar" :class="{ 'voice-bar-hidden': voiceSuggested === null }"
+             @click="voiceSuggested && voiceOpenSuggested()">
+          <template x-if="voiceSuggested.type === 'pokemon'">
+            <img :src="spriteUrl(voiceSuggested.item.id)" :alt="voiceSuggested.name" width="20" height="20"
+                 @error="onSpriteError($event, voiceSuggested.item.id)">
+          </template>
+          <span class="voice-bar-name" x-text="capitalize(voiceSuggested.name)"></span>
+        </div>
+      </div>
       <div class="header-actions">
         <button class="voice-mic"
                 :class="{ 'voice-listening': voiceListening }"
@@ -41,14 +51,7 @@
         <span class="result-count" x-show="activeTab === 'moves'" x-text="`${filteredMoves.length} / ${moves.length} Moves`"></span>
         <span class="result-count" x-show="activeTab === 'abilities'" x-text="`${filteredAbilities.length} / ${abilities.length} Abilities`"></span>
         <span class="result-count" x-show="activeTab === 'items'" x-text="`${filteredItems.length} / ${items.length} Items`"></span>
-        <div class="voice-bar" :class="{ 'voice-bar-hidden': voiceSuggested === null }"
-             @click="voiceSuggested && voiceOpenSuggested()">
-          <template x-if="voiceSuggested.type === 'pokemon'">
-            <img :src="spriteUrl(voiceSuggested.item.id)" :alt="voiceSuggested.name" width="20" height="20"
-                 @error="onSpriteError($event, voiceSuggested.item.id)">
-          </template>
-          <span class="voice-bar-name" x-text="capitalize(voiceSuggested.name)"></span>
-        </div>
+        <span class="version">v1.2.3</span>
 
       </div>
     </header>

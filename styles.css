@@ -30,6 +30,10 @@ body {
   margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
 }
 .header-left { display: flex; align-items: center; gap: 20px; }
+.header-center { display: flex; align-items: center; }
+.version {
+  font-size: 0.6rem; color: var(--text-dim); opacity: 0.5;
+}
 .title { font-size: 1.6rem; font-weight: 700; }
 .tabs { display: flex; gap: 0; }
 .tabs button {
