@@ -3080,10 +3080,10 @@ document.addEventListener('alpine:init', () => {
     voiceOpenSuggested() {
       const s = this.voiceSuggested;
       if (!s) return;
-      if (s.type === 'pokemon') this.openPokemonDetail(s.item);
-      else if (s.type === 'move') this.openMoveDetail(s.item);
-      else if (s.type === 'ability') this.openAbilityDetail(s.item);
-      else if (s.type === 'item') this.openItemDetail(s.item);
+      if (s.type === 'pokemon') { this.activeTab = 'pokemon'; this.openPokemonDetail(s.item); }
+      else if (s.type === 'move') { this.activeTab = 'moves'; this.openMoveDetail(s.item); }
+      else if (s.type === 'ability') { this.activeTab = 'abilities'; this.openAbilityDetail(s.item); }
+      else if (s.type === 'item') { this.activeTab = 'items'; this.openItemDetail(s.item); }
     },
 
     toggleVoice() {
