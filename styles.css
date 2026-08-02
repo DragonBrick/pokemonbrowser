@@ -1659,11 +1659,11 @@ body {
 }
 
 .voice-bar {
-  position: absolute;
-  top: 50%;
+  position: fixed;
+  top: 52px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 5;
+  transform: translateX(-50%);
+  z-index: 100;
   display: flex;
   align-items: center;
   gap: 5px;
