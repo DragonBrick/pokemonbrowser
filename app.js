@@ -81,6 +81,7 @@ document.addEventListener('alpine:init', () => {
     detailPokemonSearch: '',
     detailAbilitySearch: '',
     detailLevel: 100,
+    detailShowTMs: false,
 
     // === Team Builder State ===
     team: Array(6).fill(null).map(() => ({
@@ -852,6 +853,7 @@ document.addEventListener('alpine:init', () => {
       this.detailItem = p;
       this.detailPokemonSearch = '';
       this.detailLevel = 100;
+      this.detailShowTMs = false;
       this.addToRecentlyViewed('pokemon', p.name);
       this.srCheck({ type: 'pokemon', id: p.id, name: p.name });
     },
@@ -1203,6 +1205,15 @@ document.addEventListener('alpine:init', () => {
       const q = (this.detailPokemonSearch || '').toLowerCase();
       const filtered = q ? moves.filter((m) => m.name.includes(q) || m.name.replace(/-/g, ' ').includes(q)) : moves;
       return filtered;
+    },
+
+    detailOtherMoves(pokemon) {
+      const levelNames = new Set((pokemon.level_moves || []).map(m => m.name));
+      const q = (this.detailPokemonSearch || '').toLowerCase();
+      const other = (pokemon.moves || [])
+        .filter(name => !levelNames.has(name))
+        .sort();
+      return q ? other.filter(name => name.includes(q) || name.replace(/-/g, ' ').includes(q)) : other;
     },
 
     getEvolutionStage(id) {

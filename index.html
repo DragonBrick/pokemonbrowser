@@ -41,8 +41,8 @@
         <span class="result-count" x-show="activeTab === 'moves'" x-text="`${filteredMoves.length} / ${moves.length} Moves`"></span>
         <span class="result-count" x-show="activeTab === 'abilities'" x-text="`${filteredAbilities.length} / ${abilities.length} Abilities`"></span>
         <span class="result-count" x-show="activeTab === 'items'" x-text="`${filteredItems.length} / ${items.length} Items`"></span>
-        <div class="voice-bar" x-show="voiceSuggested !== null"
-             @click="voiceOpenSuggested()">
+        <div class="voice-bar" :class="{ 'voice-bar-hidden': voiceSuggested === null }"
+             @click="voiceSuggested && voiceOpenSuggested()">
           <template x-if="voiceSuggested.type === 'pokemon'">
             <img :src="spriteUrl(voiceSuggested.item.id)" :alt="voiceSuggested.name" width="20" height="20"
                  @error="onSpriteError($event, voiceSuggested.item.id)">
@@ -356,7 +356,10 @@
               </div>
             </div>
             <div class="detail-section">
-              <h3>Moves at Level <span x-text="detailLevel"></span></h3>
+              <div class="detail-moves-header">
+                <h3>Moves at Level <span x-text="detailLevel"></span></h3>
+                <button class="btn-text" @click="detailShowTMs = !detailShowTMs" x-text="detailShowTMs ? 'Hide TMs' : 'Show TMs'"></button>
+              </div>
               <input type="text" class="search-input" placeholder="Search moves..." x-model="detailPokemonSearch">
               <div class="detail-move-list" x-show="detailLearnableMoves(detailItem, detailLevel).length">
                 <template x-for="m in detailLearnableMoves(detailItem, detailLevel)" :key="m.name">
@@ -368,6 +371,17 @@
               </div>
               <div class="detail-no-moves" x-show="!detailLearnableMoves(detailItem, detailLevel).length">
                 No moves learned by level <span x-text="detailLevel"></span>.
+              </div>
+              <div x-show="detailShowTMs && detailOtherMoves(detailItem).length">
+                <h4 style="margin:12px 0 6px;font-size:0.8rem;color:var(--text-dim);">Other Moves</h4>
+                <div class="detail-move-list">
+                  <template x-for="m in detailOtherMoves(detailItem)" :key="m">
+                    <span class="detail-move-chip">
+                      <span class="move-level-badge" style="background:#555;color:#aaa;">TM</span>
+                      <span @dblclick="openMoveFromDetail(m)" x-text="m.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></span>
+                    </span>
+                  </template>
+                </div>
               </div>
             </div>
               </div>
