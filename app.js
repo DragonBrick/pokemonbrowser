@@ -3090,6 +3090,7 @@ document.addEventListener('alpine:init', () => {
       if (!this.voiceSupported) return;
       if (this.voiceListening) {
         this.voiceListening = false;
+        this.voiceSuggested = null;
         if (this.voiceRecognition) this.voiceRecognition.stop();
         return;
       }
