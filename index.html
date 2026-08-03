@@ -1558,7 +1558,6 @@
         <div class="cmp-kinds">
           <button class="cmp-kind-btn" :class="{ active: cmpKind === 'pokemon' }" @click="cmpKind = 'pokemon'; cmpResetSlots()">Pokémon</button>
           <button class="cmp-kind-btn" :class="{ active: cmpKind === 'moves' }" @click="cmpKind = 'moves'; cmpResetSlots()">Moves</button>
-          <button class="cmp-kind-btn" :class="{ active: cmpKind === 'items' }" @click="cmpKind = 'items'; cmpResetSlots()">Items</button>
         </div>
 
         <div class="cmp-toggle" x-show="cmpKind === 'pokemon'">
@@ -1570,7 +1569,7 @@
           <template x-for="(slot, i) in cmpSlots" :key="i">
             <div class="cmp-slot">
               <div class="cmp-slot-search" @click.outside="slot.results = []">
-                <input type="text" class="search-input" :placeholder="'Search ' + (cmpKind === 'pokemon' ? 'a Pokémon' : cmpKind === 'moves' ? 'a move' : 'an item') + '...'" x-model="slot.search" @input="cmpFilterInput(slot)">
+                <input type="text" class="search-input" :placeholder="slot.entity ? cmpLabel(cmpKind, slot.entity) : 'Search ' + (cmpKind === 'pokemon' ? 'a Pokémon' : 'a move') + '...'" x-model="slot.search" @input="cmpFilterInput(slot)">
                 <div class="autocomplete-dropdown" x-show="slot.results.length">
                   <template x-for="r in slot.results" :key="cmpKind + '-' + (r.id || r.name)">
                     <div class="autocomplete-item" @mousedown="cmpSelect(slot, r)">
@@ -1732,12 +1731,13 @@
           <button class="detail-back" @click="closeDetail()">← Back to list</button>
           <div class="detail-layout">
             <div class="detail-header">
-              <div class="detail-info">
-                <h2 class="detail-name" x-text="capitalize(detailItem.name)"></h2>
-                <div class="detail-meta">
-                  <div><strong>Category:</strong> <span class="item-cat-badge" :class="'item-cat-' + detailItem.category.replace(/ /g, '-').toLowerCase()" x-text="detailItem.category"></span></div>
+                <div class="detail-info">
+                  <h2 class="detail-name" x-text="capitalize(detailItem.name)"></h2>
+                  <div class="detail-meta">
+                    <div><strong>Category:</strong> <span class="item-cat-badge" :class="'item-cat-' + detailItem.category.replace(/ /g, '-').toLowerCase()" x-text="detailItem.category"></span></div>
+                  </div>
+                  <div class="detail-desc" x-text="detailItem.desc || ''" style="margin-top:8px;"></div>
                 </div>
-              </div>
             </div>
             <div class="detail-section">
               <h3>Items in this Category</h3>
