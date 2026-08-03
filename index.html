@@ -360,7 +360,7 @@
             <div class="detail-section">
               <div class="detail-moves-header">
                 <h3>Moves at Level <span x-text="detailLevel"></span></h3>
-                <button class="btn-text" @click="detailShowTMs = !detailShowTMs" x-text="detailShowTMs ? 'Hide TMs' : 'Show TMs'"></button>
+                <button class="tm-toggle" @click="detailShowTMs = !detailShowTMs" x-text="detailShowTMs ? 'Hide TMs' : 'Show TMs'"></button>
               </div>
               <input type="text" class="search-input" placeholder="Search moves..." x-model="detailPokemonSearch">
               <div class="detail-move-list" x-show="detailLearnableMoves(detailItem, detailLevel).length">

@@ -380,6 +380,20 @@ body {
 .detail-moves-header h3 {
   margin: 0;
 }
+.tm-toggle {
+  padding: 3px 10px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.tm-toggle:hover {
+  background: #2b5cc9;
+}
 .detail-move-chip, .ability-chip {
   display: inline-block; padding: 4px 12px;
   background: var(--surface3); border-radius: 16px;
