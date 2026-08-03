@@ -1097,6 +1097,23 @@ document.addEventListener('alpine:init', () => {
       return entry ? entry.chain : null;
     },
 
+    signatureMove(pokemon) {
+      const chain = this.getEvolutionChain(pokemon.id);
+      if (!chain) return null;
+      const familyNames = new Set();
+      for (const stage of chain) {
+        for (const evo of stage) familyNames.add(evo.name);
+      }
+      const candidates = [];
+      for (const m of this.moves) {
+        if (!pokemon.moves.includes(m.name)) continue;
+        if (m.learners <= 1 || m.pokemon.every(n => familyNames.has(n))) {
+          candidates.push(m.name);
+        }
+      }
+      return candidates.length ? candidates : null;
+    },
+
     evolutionLayout(id) {
       const chain = this.getEvolutionChain(id);
       if (!chain || !chain.length) return null;

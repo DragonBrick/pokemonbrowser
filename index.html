@@ -392,6 +392,21 @@
                   <h3>Pokédex Entry</h3>
                   <div class="detail-desc" x-text="factsData[detailItem.id] || 'No Pokédex entry available.'"></div>
                 </div>
+                <div class="detail-section">
+                  <h3>Signature Move</h3>
+                  <template x-if="signatureMove(detailItem)">
+                    <div class="detail-move-list">
+                      <template x-for="m in signatureMove(detailItem)" :key="m">
+                        <span class="detail-move-chip">
+                          <span @dblclick="openMoveFromDetail(m)" x-text="m.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())"></span>
+                        </span>
+                      </template>
+                    </div>
+                  </template>
+                  <div class="detail-desc" x-show="!signatureMove(detailItem)" style="font-size:0.8rem;">
+                    This Pokémon has no signature move.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
