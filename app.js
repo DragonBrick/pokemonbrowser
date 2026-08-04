@@ -1796,7 +1796,6 @@ document.addEventListener('alpine:init', () => {
       if (!q) { slot.results = []; return; }
       if (this.cmpKind === 'pokemon') {
         slot.results = this.pokemon
-          .filter((p) => !p.name.includes('-mega') && !p.name.includes('-gmax') && !p.name.includes('-totem'))
           .filter((p) => p.name.replace(/-/g, ' ').toLowerCase().startsWith(q))
           .slice(0, 8);
       } else if (this.cmpKind === 'moves') {
