@@ -93,6 +93,7 @@ window.__ITEMS_DATA__ = [
   { name: "Icy Rock", category: "Battle", desc: "Extends Hail duration" },
   { name: "Iron Ball", category: "Battle", desc: "Halves Speed; grounds Flying-types" },
   { name: "Lagging Tail", category: "Battle", desc: "Makes the holder move last" },
+  { name: "Leftovers", category: "Battle", desc: "Restores 1/16 of max HP each turn" },
   { name: "Life Orb", category: "Battle", desc: "Boosts damage by 30% at a HP cost" },
   { name: "Light Clay", category: "Battle", desc: "Extends Light Screen and Reflect duration" },
   { name: "Loaded Dice", category: "Battle", desc: "Increases multi-hit move hits" },
