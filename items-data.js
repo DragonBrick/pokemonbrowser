@@ -126,6 +126,14 @@ window.__ITEMS_DATA__ = [
   { name: "Wise Glasses", category: "Battle", desc: "Boosts special move damage" },
   { name: "Zoom Lens", category: "Battle", desc: "Boosts accuracy when moving last" },
 
+  // === Species-Specific ===
+  { name: "Deep Sea Scale", category: "Battle", desc: "Doubles Clamperl's Sp. Def; evolves Clamperl when traded" },
+  { name: "Deep Sea Tooth", category: "Battle", desc: "Doubles Clamperl's Sp. Atk; evolves Clamperl when traded" },
+  { name: "Light Ball", category: "Battle", desc: "Doubles Pikachu's Attack and Sp. Atk" },
+  { name: "Soul Dew", category: "Battle", desc: "Boosts Latios/Latias's Sp. Atk and Sp. Def" },
+  { name: "Thick Club", category: "Battle", desc: "Doubles Cubone and Marowak's Attack" },
+  { name: "Weakness Policy", category: "Battle", desc: "Sharply raises Attack and Sp. Atk when hit super-effectively" },
+
   // === Mega Stone ===
   { name: "Absolite", category: "Mega Stone", desc: "Mega evolves Absol" },
   { name: "Aggronite", category: "Mega Stone", desc: "Mega evolves Aggron" },
