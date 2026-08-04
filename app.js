@@ -213,7 +213,7 @@ document.addEventListener('alpine:init', () => {
     itemSortDir: 'asc',
     filteredItems: [],
     itemShowAddMenu: false,
-    itemCategories: ['Battle', 'Berry', 'Choice', 'Evolution', 'Mega Stone', 'Misc', 'Type Boost'],
+    itemCategories: ['Battle', 'Berry', 'Choice', 'Evolution', 'Mega Stone', 'Misc', 'Plates', 'Species-Specific', 'Type Boost'],
     itemDetailSearch: '',
 
     voiceListening: false,
