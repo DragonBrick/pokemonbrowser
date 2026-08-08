@@ -81,7 +81,7 @@ document.addEventListener('alpine:init', () => {
     detailPokemonSearch: '',
     detailAbilitySearch: '',
     detailLevel: 100,
-    detailShowTMs: false,
+    detailShowTMs: true,
 
     // === Team Builder State ===
     team: Array(6).fill(null).map(() => ({
@@ -570,11 +570,12 @@ document.addEventListener('alpine:init', () => {
       }
       const map = {};
       for (const p of this.pokemon) {
+        const levelMoveNames = new Set((p.level_moves || []).map(lm => lm.name));
         for (const m of p.moves) {
           if (!map[m]) {
             const entry = dataMap[m] || {};
             map[m] = {
-              name: m, learners: 0, gen: 99, pokemon: [],
+              name: m, learners: 0, gen: 99, pokemon: [], naturalPokemon: [], tmPokemon: [],
               type: entry.type || null,
               power: entry.power ?? null,
               accuracy: entry.accuracy ?? null,
@@ -586,6 +587,11 @@ document.addEventListener('alpine:init', () => {
           }
           map[m].learners++;
           map[m].pokemon.push(p.name);
+          if (levelMoveNames.has(m)) {
+            map[m].naturalPokemon.push(p.name);
+          } else {
+            map[m].tmPokemon.push(p.name);
+          }
           map[m].gen = Math.min(map[m].gen, p.generation);
         }
       }
@@ -853,7 +859,7 @@ document.addEventListener('alpine:init', () => {
       this.detailItem = p;
       this.detailPokemonSearch = '';
       this.detailLevel = 100;
-      this.detailShowTMs = false;
+      this.detailShowTMs = true;
       this.addToRecentlyViewed('pokemon', p.name);
       this.srCheck({ type: 'pokemon', id: p.id, name: p.name });
     },
@@ -882,6 +888,11 @@ document.addEventListener('alpine:init', () => {
     srNew() {
       if (this.srTimer) clearInterval(this.srTimer);
       if (this.srCountdownTimer) clearInterval(this.srCountdownTimer);
+      if (this.voiceListening) {
+        this.voiceListening = false;
+        this.voiceSuggested = null;
+        if (this.voiceRecognition) this.voiceRecognition.stop();
+      }
       let start, target;
       if (this.srCustomStart && this.srCustomTarget) {
         start = this.srCustomStart;
@@ -1069,6 +1080,18 @@ document.addEventListener('alpine:init', () => {
       this.detailMoveSearch = '';
       this.addToRecentlyViewed('move', m.name);
       this.srCheck({ type: 'move', id: m.id, name: m.name });
+    },
+
+    detailMoveNaturalLearners() {
+      if (!this.detailItem || !this.detailMoveSearch) return this.detailItem ? (this.detailItem.naturalPokemon || []) : [];
+      const q = this.detailMoveSearch.toLowerCase();
+      return (this.detailItem.naturalPokemon || []).filter(p => p.includes(q));
+    },
+
+    detailMoveTmLearners() {
+      if (!this.detailItem || !this.detailMoveSearch) return this.detailItem ? (this.detailItem.tmPokemon || []) : [];
+      const q = this.detailMoveSearch.toLowerCase();
+      return (this.detailItem.tmPokemon || []).filter(p => p.includes(q));
     },
 
     closeDetail() {

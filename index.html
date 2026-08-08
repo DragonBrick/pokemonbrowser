@@ -12,12 +12,12 @@
       <div class="header-left">
         <button class="voice-mic"
                 :class="{ 'voice-listening': voiceListening }"
-                x-show="voiceSupported"
+                x-show="voiceSupported && !srActive"
                 @click="toggleVoice()"
                 :title="voiceListening ? 'Stop listening' : 'Voice Suggestions'">
                 <span x-text="voiceListening ? '🎤' : '🎤'"></span>
         </button>
-        <button class="voice-filter-btn" x-show="voiceSupported"
+        <button class="voice-filter-btn" x-show="voiceSupported && !srActive"
                 @click="toggleVoiceFilter()" :title="'Voice filter: ' + voiceFilter">
           <span x-text="voiceFilter === 'all' ? 'All' : voiceFilter === 'pokemon' ? 'P' : voiceFilter === 'move' ? 'M' : voiceFilter === 'ability' ? 'A' : 'I'"></span>
         </button>
@@ -626,8 +626,14 @@
             <div class="detail-section">
               <h3>Learned By</h3>
               <input type="text" class="search-input" placeholder="Search Pokémon..." x-model="detailMoveSearch">
-              <div class="detail-move-list">
-                <template x-for="p in detailItem.pokemon.filter(p => !detailMoveSearch || p.includes(detailMoveSearch.toLowerCase()))" :key="p">
+              <div class="detail-move-list" x-show="detailMoveNaturalLearners().length">
+                <template x-for="p in detailMoveNaturalLearners()" :key="'nat-' + p">
+                  <span class="detail-move-chip" @dblclick="openPokemonFromDetail(p)" x-text="capitalize(p)"></span>
+                </template>
+              </div>
+              <div class="detail-move-list" x-show="detailMoveTmLearners().length" style="margin-top:8px">
+                <h4 style="margin:0 0 4px;font-size:0.8rem;color:var(--text-dim);">TM / Tutor / Egg</h4>
+                <template x-for="p in detailMoveTmLearners()" :key="'tm-' + p">
                   <span class="detail-move-chip" @dblclick="openPokemonFromDetail(p)" x-text="capitalize(p)"></span>
                 </template>
               </div>
